@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:web="http://java.sun.com/xml/ns/javaee" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" version="2.5">
+  <display-name>HelpDesk</display-name>
+  <welcome-file-list>
+    <welcome-file>index.html</welcome-file>
+  </welcome-file-list>
+  <servlet>
+    <description></description>
+    <display-name>TicketsServlet</display-name>
+    <servlet-name>TicketsServlet</servlet-name>
+    <servlet-class>helpdesk.TicketsServlet</servlet-class>
+  </servlet>
+    <servlet>
+    <description></description>
+    <display-name>ProxyServlet</display-name>
+    <servlet-name>ProxyServlet</servlet-name>
+    <servlet-class>com.sap.gamification.widgets.ProxyServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>ProxyServlet</servlet-name>
+    <url-pattern>/ProxyServlet/JsonRPC</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>TicketsServlet</servlet-name>
+    <url-pattern>/TicketsServlet</url-pattern>
+  </servlet-mapping>
+  <servlet>
+    <description></description>
+    <display-name>UserDataServlet</display-name>
+    <servlet-name>UserDataServlet</servlet-name>
+    <servlet-class>helpdesk.UserDataServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>UserDataServlet</servlet-name>
+    <url-pattern>/UserDataServlet</url-pattern>
+  </servlet-mapping>
+  <login-config>
+    <auth-method>FORM</auth-method>
+  </login-config>
+  <security-constraint>
+    <web-resource-collection>
+      <web-resource-name>Protected Area</web-resource-name>
+      <url-pattern>/*</url-pattern>
+    </web-resource-collection>
+    <auth-constraint>
+      <role-name>helpdesk</role-name>
+    </auth-constraint>
+  </security-constraint>
+  <security-role>
+    <description>All SAP HANA Cloud Platform users</description>
+    <role-name>helpdesk</role-name>
+  </security-role>
+  <resource-ref>
+    <res-ref-name>gsdest</res-ref-name>
+    <res-type>com.sap.core.connectivity.api.http.HttpDestination</res-type>
+  </resource-ref>
+  <resource-ref>
+    <res-ref-name>gswidgetdest</res-ref-name>
+    <res-type>com.sap.core.connectivity.api.http.HttpDestination</res-type>
+  </resource-ref> 
+</web-app>

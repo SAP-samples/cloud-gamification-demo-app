@@ -1,0 +1,40 @@
+.gs-notification {
+
+	position: absolute;
+	width: 350px;
+	margin-left: -175px;
+	left: 50%;
+	height: 50px;
+	bottom: 0;
+	opacity: 0;
+	transition: bottom 0.5s, opacity 0.5s;
+	-o-transition: bottom 0.5s, opacity 0.5s;
+	-webkit-transition: bottom 0.5s, opacity 0.5s;
+	-moz-transition: bottom 0.5s, opacity 0.5s;
+	color: white;
+	box-shadow: 0 0 10px 0 #969696;
+	line-height: 50px;
+	font-size: 14px;
+}
+.gs-notification-visible{
+	opacity: 1 !important;
+}
+.gs-notification-icon {
+	display: inline-block;
+	width: 15%;
+	height: 100%;
+	vertical-align: top;
+}
+.gs-notification-icon img{ 
+	padding: 7px;
+	width: 37px;
+	height: 37px;
+}
+.gs-notification-content{
+	display: inline-block;
+	width: 85%;
+	height: 100%;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	overflow: hidden;
+}

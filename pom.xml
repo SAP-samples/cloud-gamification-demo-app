@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<project
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
+	xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>com.sap.gamification</groupId>
+	<artifactId>helpdesk</artifactId>
+	<packaging>war</packaging>
+	<version>0.8.7</version>
+	<dependencies>
+		<!-- The SAP HANA Cloud Platform Java Web API -->
+		<dependency>
+			<groupId>com.sap.cloud</groupId>
+			<artifactId>neo-java-web-api</artifactId>
+			<version>1.66.13.1</version>
+			<scope>provided</scope>
+		</dependency>
+		<!-- used to handle JSON transformation in servlets -->
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.2.2</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<!-- Controlling web context, e.g. to https://hostname/helpdesk instead 
+			of https://hostname/helpdesk-0.8.0. We do not implement this via filename, 
+			e.g. "helpdesk.war", with the <finalName> tag but define META-INF/MANIFEST.MF 
+			-> Web-ContextPath: helpdesk instead. -->
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>2.1.1</version>
+				<configuration>
+					<archive>
+						<manifestEntries>
+							<Version>${project.version}</Version>
+							<Web-ContextPath>helpdesk</Web-ContextPath>
+						</manifestEntries>
+					</archive>
+				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>2.13</version>
+				<configuration>
+					<outputFileFormat>xml</outputFileFormat>
+					<consoleOutput>false</consoleOutput>
+					<enableRSS>false</enableRSS>
+					<linkXRef>false</linkXRef>
+					<configLocation>checkstyle-config.xml</configLocation>
+					<sourceDirectory>${basedir}/src</sourceDirectory>
+					<encoding>UTF-8</encoding>
+					<failOnViolation>true</failOnViolation>
+					<violationSeverity>error</violationSeverity>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>
