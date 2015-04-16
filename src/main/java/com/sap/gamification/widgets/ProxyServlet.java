@@ -60,7 +60,6 @@ public class ProxyServlet extends HttpServlet {
    private static final String GAMIFICATION_SERVICE_APPNAME = System.getProperty("gamification.demoapp.appname", "HelpDesk");
 
    private  String lastCSRFToken;
-   private final HttpContext httpContext = new BasicHttpContext();
 
    /**
     * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
@@ -180,7 +179,7 @@ public class ProxyServlet extends HttpServlet {
          post.setEntity(new UrlEncodedFormEntity(urlParameters));
 
          // execute request, send POST to gamification service
-         HttpResponse gamificationServiceResponse = httpClient.execute(post, httpContext);
+         HttpResponse gamificationServiceResponse = httpClient.execute(post);
          logger.debug("[Helpdesk TicketServlet] sending event to destination " + GAMIFICATION_SERVICE_WIDGET_DESTINATION + " (App: " + app
                + ") --> " + jsonString);
 
@@ -196,10 +195,11 @@ public class ProxyServlet extends HttpServlet {
 
                // get token
                // create http context with cookie store
+               HttpContext httpContext = new BasicHttpContext();
                httpContext.setAttribute(ClientContext.COOKIE_STORE, new BasicCookieStore());
 
                // get token
-               lastCSRFToken = fetchToken(httpClient);
+               lastCSRFToken = fetchToken(httpClient, httpContext);
                
                post.setHeader("X-CSRF-Token", lastCSRFToken);
 
@@ -283,7 +283,7 @@ public class ProxyServlet extends HttpServlet {
       return buffer.toString();
    }
 
-   private final String fetchToken(HttpClient httpClient) {
+   private final String fetchToken(HttpClient httpClient, HttpContext httpContext) {
       HttpGet request = new HttpGet();
 
       request.setHeader("X-CSRF-Token", "Fetch");
