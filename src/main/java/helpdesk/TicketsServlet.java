@@ -114,13 +114,16 @@ public class TicketsServlet extends HttpServlet {
    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
       StringBuffer jb = new StringBuffer();
-      String line = null;
-
+      int intC;
       BufferedReader reader;
       try {
          reader = request.getReader();
-         while ((line = reader.readLine()) != null)
-            jb.append(line);
+         while ((intC = reader.read()) != -1)
+            jb.append((char) intC);
+         // limit upload to 50MB to prevent DoS attacks
+         if (jb.length() > 52428800) {
+            throw new IllegalArgumentException("input too long");
+         }
       }
       catch (IOException e) {
          response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error serializing request");
@@ -261,14 +264,19 @@ public class TicketsServlet extends HttpServlet {
             httpClient.getConnectionManager().shutdown();
          }
          if (null != httpEntity) {
-            EntityUtils.consume(httpEntity);
+            try {
+               EntityUtils.consume(httpEntity);
+            }
+            catch (IOException e) {
+               logger.debug("Failed to consume HttpEntity", e.getMessage());
+            }
          }
          if (reader != null) {
             try {
                reader.close();
             }
             catch (IOException e) {
-               logger.error("Failed to release resources after exception", e.getMessage());
+               logger.debug("Failed to release resources after exception", e.getMessage());
             }
          }
       }
