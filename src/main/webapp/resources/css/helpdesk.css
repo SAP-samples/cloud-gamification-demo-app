@@ -128,16 +128,15 @@ div#openTicketsView {
     display: table;
 }
 
-#openTicketsVertLayout {
+#ticketsWorkbench {
     padding-top: 60px;
     width: 100%;
 }
-#openTicketsVertLayout > div:first-child {
+#ticketsWorkbench > div:first-child {
     width: 400px;
 }
-#openTicketsVertLayout > div:nth-child(2) {
+#ticketsWorkbench > div:nth-child(2) {
 	width: 100%;
-	/* float: left; */
 	margin-left: 25px;
 	max-width: 820px;
 }
@@ -148,10 +147,6 @@ div#openTicketsLayout .sapUiVltCell.sapuiVltCell {
 
 div#openTicketsLayout .sapUiVlt {
   display: block;
-}
-
-div#openTicketsLayout {
-/*  width: 80% !important; */
 }
 div.ticketPanel {
     cursor: pointer;
@@ -217,9 +212,6 @@ div.ticketDetails >div:last-child{
     right: 10px;
 }
 div#ticketResponse {
-/*  padding-right: 60px; */
-/*  float: right; */
-/*  width: initial !important; */
     width: 98% !important;
 }
 button#responseBtn {
@@ -258,7 +250,6 @@ textarea#responseInput{
     margin: 15px;
     width: 96% !important;
     border: 1px solid rgb(242, 232, 215);
-/*  background-color: rgb(255, 251, 206); */
     background-color: rgb(255, 237, 206);
     background-color: rgb(254, 245, 231) !important;
     border-radius: 6px;
@@ -293,11 +284,6 @@ label#current-ticket-date {
 label#current-ticket-id {
     width: 15%;
 }
-label#current-ticket-customer-name {
-/*  width: 35%; */
-/*  text-align: right !important; */
-/*  padding-right: 5px; */
-}
 div#currentTicketHeader{
     width: 100%;
 }
@@ -330,9 +316,8 @@ div#notificationsVL {
     padding-top: 60px;
     display: table;
     margin: 0 auto;
-    /* width: 1240px; */
 } 
-div#notificationsVL label {
+.notification-message{
     font: 16px/1.47 BentonSans, Arial, Helvetica, sans-serif !important;
 }
 .notification-panel {
@@ -341,10 +326,18 @@ div#notificationsVL label {
     padding: 5px;
     min-width: 220px;
 }
-
+.notification-panel label {
+    padding: 3px 10px;
+}
+.notification-date {
+    font: 12px/1.9 BentonSans, Arial, Helvetica, sans-serif !important;
+    color: grey !important;
+}
 
 
 /** profile page styles **/ 
 
-.sap-blue {background: #008fd3 !important;}
+.sap-blue {
+    background: #008fd3 !important;
+}
 

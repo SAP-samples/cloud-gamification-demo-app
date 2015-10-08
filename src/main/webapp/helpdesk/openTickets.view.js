@@ -108,7 +108,7 @@ sap.ui.jsview("helpdesk.openTickets", {
       content: [ticketResponseLayout, sendBtn]
     });
 
-    var horizontalLayout = new sap.ui.commons.layout.HorizontalLayout("openTicketsVertLayout", {
+    var horizontalLayout = new sap.ui.commons.layout.HorizontalLayout("ticketsWorkbench", {
       content: [oOpenTickets, oResponse]
     });
 

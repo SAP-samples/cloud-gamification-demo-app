@@ -42,8 +42,8 @@ import com.sap.core.connectivity.api.http.HttpDestination;
  * 
  * on GET: a hard coded array of three tickets is returned in JSON format
  * 
- * on POST: the servlet looks up the ticket and its relevance (critical or not), then creates and sends an
- * event for the gamification service
+ * on POST: the servlet looks up the ticket and its relevance (critical or not), then creates and sends an event for the
+ * gamification service
  * 
  */
 public class TicketsServlet extends HttpServlet {
@@ -70,8 +70,8 @@ public class TicketsServlet extends HttpServlet {
       // critical.
       ticketMap = new HashMap<Integer, Ticket>();
 
-      Ticket ticket = new Ticket(10056, "", "Hi! I just received my new computer and the button on the CD tray doesn't work properly.", "Jack",
-            183, new Date(), "");
+      Ticket ticket = new Ticket(10056, "", "Hi! I just received my new computer and the button on the CD tray doesn't work properly.",
+            "Jack", 183, new Date(), "");
       ticketMap.put(ticket.getTicketid(), ticket);
 
       ticket = new Ticket(10057, "", "My computer mouse is broken. When I move the mouse right, the pointer goes left. ", "Max", 223,
@@ -129,40 +129,87 @@ public class TicketsServlet extends HttpServlet {
          response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error serializing request");
       }
 
-      Gson gson = new Gson();
-      // create a ticket object from the request
-      Ticket request_ticket = gson.fromJson(jb.toString(), Ticket.class);
+      String gamificationServiceResponse = "";
 
-      // look up the relevance of the ticket
-      String relevance = ticketMap.get(request_ticket.getTicketid()).getRelevance();
-
-      String gamificationResponse = "";
-      try {
-
-         // notify the gamification service
-         // productive code additionally would need some plausibility checks here, e.g. to prevent 
-         // answering the same ticket thousands of times, causing DoS attacks etc.
-         gamificationResponse = tellGamificationServiceAboutSolvedProblem(request.getRemoteUser(), relevance);
-
+      // when the request only holds "initPlayer", send an empty event to the service to assure that the player is being
+      // created. this is not mandatory, as the player will always be created implicitly
+      if (jb.toString().equals("initPlayer")) {
+         try {
+            gamificationServiceResponse = initPlayerWithEmptyEvent(request.getRemoteUser());
+         }
+         catch (Exception e) {
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error retrieving user data: " + e.getMessage());
+         }
       }
-      catch (Exception e) {
-         response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error sending requests to gamification service. Nested error: "
-               + e.getMessage());
-         return;
+      else {
+
+         // check the request data, pick up the related ticket, compare its relevance and send the event to the GS
+         // service
+
+         Gson gson = new Gson();
+         // create a ticket object from the request
+         Ticket request_ticket = gson.fromJson(jb.toString(), Ticket.class);
+
+         // look up the relevance of the ticket
+         String relevance = ticketMap.get(request_ticket.getTicketid()).getRelevance();
+
+         try {
+
+            // notify the gamification service
+            // productive code additionally would need some plausibility checks here, e.g. to prevent
+            // answering the same ticket thousands of times, causing DoS attacks etc.
+            gamificationServiceResponse = tellGamificationServiceAboutSolvedProblem(request.getRemoteUser(), relevance);
+
+         }
+         catch (Exception e) {
+            response.sendError(
+                  HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                  "Error sending requests to gamification service. Nested error: " + e.getMessage());
+            return;
+         }
+
       }
 
       // create a doPost Servlet Response; include response from
       // gamification service
-      String doPostResponse = "{\"gamificationservice\": " + gamificationResponse + "}";
+      String doPostResponse = "{\"gamificationservice\": " + gamificationServiceResponse + "}";
 
       response.getWriter().println(doPostResponse);
    }
 
    /**
+    * at the moment players are initiated implicitly, as soon as there are events sent for their playerID
+    * 
+    * @param playerId
+    *           gamification service player id
+    * @return
+    * @throws ClientProtocolException
+    * @throws IOException
+    * @throws DestinationException
+    * @throws NamingException
+    */
+   private String initPlayerWithEmptyEvent(String playerId)
+         throws ClientProtocolException,
+         IOException,
+         DestinationException,
+         NamingException {
+
+      // create json event string. to initialize players, event name can be anything
+      String jsonRPCrequest = getEventStringFor(playerId, "dummyEvent", null);
+
+      String gamificationServiceResponse = sendGamificationEvent(jsonRPCrequest);
+
+      // create a request response that contains the original request and forwards the response from the gamification
+      // service
+      return "{ \"event\": \"" + jsonRPCrequest + "&app=" + GAMIFICATION_SERVICE_APP + "\", \"response\":" + gamificationServiceResponse
+            + "}";
+   }
+
+   /**
     * Tells the gamification service that a user has solved a problem
     * 
-    * @param userId
-    *           user identification to be used in the gamification service event
+    * @param playerId
+    *           gamification service player id
     * @param relevance
     *           ticket relevance, either <code>"critical"</code> or <code>""</code>
     * @return String containing the gamification service response
@@ -171,23 +218,42 @@ public class TicketsServlet extends HttpServlet {
     * @throws ClientProtocolException
     * @throws IOException
     */
-   private String tellGamificationServiceAboutSolvedProblem(String userId, String relevance)
+   private String tellGamificationServiceAboutSolvedProblem(String playerId, String relevance)
          throws ClientProtocolException,
          IOException,
          DestinationException,
          NamingException {
 
       // gamification event data
-      String jsonRPCrequest = "{" + "\"method\":\"receiveEvents\"," + "\"id\":1, " + "\"params\":[" + "[{" + "\"siteId\":\""
-            + GAMIFICATION_SERVICE_APP + "\"," + "\"type\":\"solvedProblem\"," + "\"playerid\":\"" + userId + "\"," + "\"data\":{"
-            + "\"relevance\":\"" + relevance + "\"," + "\"processTime\":20" + "}" + "}]" + "]" + "}";
+      String jsonRPCrequest = getEventStringFor(playerId, "solvedProblem", relevance);
 
       String gamificationServiceResponse = sendGamificationEvent(jsonRPCrequest);
 
-      String frontendResponse = "{ \"event\": \"" + jsonRPCrequest + "&app=" + GAMIFICATION_SERVICE_APP + "\", \"response\":"
-            + gamificationServiceResponse + "}";
+      // create a request response that contains the original request and forwards the response from the gamification
+      // service
+      return "{ \"event\": " + jsonRPCrequest + "&app=" + GAMIFICATION_SERVICE_APP + "\", \"response\":" + gamificationServiceResponse
+            + "}";
 
-      return frontendResponse;
+   }
+
+   /**
+    * creates a json string which can be used to send certain events for users
+    * 
+    * @param playerId
+    * @param eventName
+    * @param relevance
+    * @return
+    */
+   private String getEventStringFor(String playerId, String eventName, String relevance) {
+
+      String response = "{\"method\":\"receiveEvent\",\"id\":1, \"params\":[{\"siteId\":\"" + GAMIFICATION_SERVICE_APP + "\",\"type\":\""
+            + eventName + "\",\"playerid\":\"" + playerId + "\",\"data\":{";
+
+      if (relevance != null) {
+         response += "\"relevance\":\"" + relevance + "\",\"processTime\":20";
+      }
+      response += "}}]}";
+      return response;
    }
 
    /**
@@ -235,7 +301,6 @@ public class TicketsServlet extends HttpServlet {
          logger.debug("[Helpdesk TicketServlet] sending event to destination " + GAMIFICATION_SERVICE_DESTINATION + " (App: "
                + GAMIFICATION_SERVICE_APP + ") --> " + jsonString);
 
-        
          // serialize gamification service response
 
          StringBuffer buffer = new StringBuffer();
@@ -252,8 +317,7 @@ public class TicketsServlet extends HttpServlet {
             logger.error(gamificationServiceResponse.getStatusLine().toString());
             throw new IllegalStateException(gamificationServiceResponse.getStatusLine().toString());
          }
-         
-         
+
          return buffer.toString();
       }
       finally {

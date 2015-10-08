@@ -25,20 +25,11 @@ sap.ui.jsview("helpdesk.notifications", {
             width: "100%",
             height: "100%",
         });
-        newLyt.bindAggregation("content", "/newNotifications", oController.oNotificationsTmpl);
-
-        var earlierLbl = new sap.ui.commons.Label({
-            text: "Earlier"
-        });
-        var earlierLyt = new sap.ui.commons.layout.VerticalLayout("notificationsListHistory", {
-            width: "100%",
-            height: "100%",
-        });
-        earlierLyt.bindAggregation("content", "/history", oController.oNotificationsTmpl);
+        newLyt.bindAggregation("content", "/", oController.oNotificationsTmpl);
 
         var vL = new sap.ui.commons.layout.VerticalLayout("notificationsVL", {
             scrollable: true,
-            content: [newLbl, newLyt, earlierLbl, earlierLyt]
+            content: [newLbl, newLyt]
         });
 
         return vL;

@@ -47,7 +47,7 @@ var GSNotifications = (function() {
         groupPoints: true
     };
 
-    // TODO: currently notifications will always fade upwards from bottom
+    // notifications will always fade upwards from bottom
     var _highestBottom = _defaultConfig.offset;
 
     // holds all notification data
@@ -57,8 +57,7 @@ var GSNotifications = (function() {
         toBeDisplayed : [],
         haveBeenDisplayed : [],
         processedIds : [],
-        displaying : [],
-        history : []
+        displaying : []
     };
 
 
@@ -123,7 +122,7 @@ var GSNotifications = (function() {
         // repeatedly let the module check for new notifications
         clearInterval(_interval);
         _interval = setInterval(_poll, _config.interval);
-        _log("Notification module loaded.");
+        _log("Notification module initialised.");
 
         var loadedEvent = new CustomEvent(
             "gs-notification-ready"
@@ -148,22 +147,6 @@ var GSNotifications = (function() {
 
     }
 
-    // converts strings like "20131016T110515.718+0200" into a usable date
-    function _formatDate(sJsonDate) {
-
-        var isoString = "";
-
-        isoString += sJsonDate.substring(0,4) + "-";
-        isoString += sJsonDate.substring(4,6) + "-";
-        isoString += sJsonDate.substring(6,8) + "T";
-        isoString += sJsonDate.substring(9,11) + ":";
-        isoString += sJsonDate.substring(11,13) + ":";
-        isoString += sJsonDate.substring(13,22) + ":";
-        isoString += sJsonDate.substring(22,24);
-        
-        return new Date(isoString).getTime();
-
-    }
     function _getIconUrl (category, icon) {
 
     	return "widgets/images/Notification" + category + ".png";
@@ -172,18 +155,15 @@ var GSNotifications = (function() {
 
     function _poll() {
 
-        var newNotifications = 0;
         var request = {
         		method: "getNotificationsForPlayer",
         		id: 1,
-        		params: [_config.userName, 20] 
+        		params: [_config.userName, _config.showNotificationsYoungerThan] 
         };
 
         _polling = true;
 
-        _sendAPIRequest(request, null, function (data) {
-            // TODO: refactor to get rid of this horrible if stack
-            var receivedHistory = false;
+        _sendAPIRequest(request, function (data) {
             var prevNoti = { index: 0, target : ""};
 
             if (data.result !== null) {
@@ -193,79 +173,69 @@ var GSNotifications = (function() {
                     // prepare notifications data, check if they werent already shown
                     for (var i = 0; i < data.result.length; i++) {
 
-                        data.result[i].dateCreated = _formatDate(data.result[i].dateCreated);
+                        // type conversion from float points to integer points
+                        if (data.result[i].category === "POINT") {
+                            data.result[i].detail = parseInt(data.result[i].detail, 10);
+                        }
 
                         // only process notifications once
                         if (_notifications.processedIds.indexOf(data.result[i].id) === -1){
 
-                            if ((data.result[i].dateCreated) > _config.showNotificationsYoungerThan)  {
+                            // everything that is no "point" notification, will be shown
+                            if (data.result[i].category !== "POINT") {
 
-                                // everything that is no "point" notification, will be shown
-                                if (data.result[i].category !== "POINT") {
+                                _notifications.toBeDisplayed.push(data.result[i]);
+
+                            } else if (_config.showPoints) {
+                                
+                                if (!_config.groupPoints) {
 
                                     _notifications.toBeDisplayed.push(data.result[i]);
 
-                                } else if (_config.showPoints) {
-                                    
-                                    if (!_config.groupPoints) {
+                                } else {
 
-                                        _notifications.toBeDisplayed.push(data.result[i]);
+                                    //check if there are already notifications to show
+                                    if (_notifications.toBeDisplayed.length>0) {
+
+                                        // check planned notifications for equal point types that could be used 
+                                        // for grouping with the current notification (data.result[i])
+                                        for (var j = 0 ; j < _notifications.toBeDisplayed.length; j++) {
+                                            // add the amount to the already existing notification
+                                            if (data.result[i].category === "POINT" 
+                                                && _notifications.toBeDisplayed[j].subject === data.result[i].subject
+                                                && _notifications.toBeDisplayed[j].message === data.result[i].message) {
+                                                _notifications.toBeDisplayed[j].detail += data.result[i].detail;
+                                                break;
+                                            }
+                                            // if the point type wasnt already existing, add it as a new notification
+                                            if (j === _notifications.toBeDisplayed.length-1) {
+                                                _notifications.toBeDisplayed.push(data.result[i]);
+                                                break;
+                                            }
+                                        }
 
                                     } else {
 
-                                        //check if there are already notifications to show
-                                        if (_notifications.toBeDisplayed.length>0) {
-
-                                            // check planned notifications for equal point types that could be used 
-                                            // for grouping with the current notification (data.result[i])
-                                            for (var j = 0 ; j < _notifications.toBeDisplayed.length; j++) {
-                                                // add the amount to the already existing notification
-                                                if (_notifications.toBeDisplayed[j].target === data.result[i].target) {
-                                                    _notifications.toBeDisplayed[j].amount += data.result[i].amount ;
-                                                    break;
-                                                }
-                                                // if the point type wasnt already existing, add it as a new notification
-                                                if (j === _notifications.toBeDisplayed.length-1) {
-                                                    _notifications.toBeDisplayed.push(data.result[i]);
-                                                    break;
-                                                }
-                                            }
-
-                                        } else {
-
-                                            _notifications.toBeDisplayed.push(data.result[i]);
-
-                                        }
+                                        _notifications.toBeDisplayed.push(data.result[i]);
 
                                     }
-                                    
-                                }
-                                                
-                            } else {
-                                
-                                _notifications.history.push(data.result[i]);
-                                receivedHistory = true;
 
+                                }
+                                
                             }
-                            newNotifications ++;
+                            
                             _notifications.processedIds.push(data.result[i].id);
+
+                            // make sure to only request notifications that are younger than the once already received
+                            if (data.result[i].dateCreated > _config.showNotificationsYoungerThan) {
+                                _config.showNotificationsYoungerThan = data.result[i].dateCreated;
+                            }
 
                         }
 
                     }
 
-                    _log("Received notifications: " + data.result.length + " (" +
-                        newNotifications + " new)");
-
-
-                    // globally announce that older notifications are available
-                    if(receivedHistory) {
-                        var notificationsEvent = new CustomEvent(
-                            "gs-notification-history"
-                        );
-                        document.dispatchEvent(notificationsEvent);
-                    }
-
+                    _log("Received " + data.result.length + " new notifications!");
 
                     // generate notifications
                     _prepareAndInjectNotifications();
@@ -273,7 +243,7 @@ var GSNotifications = (function() {
 
                 } else {
 
-                    _log("No notifications available. Make sure your GP instance has rules in place.");
+                    _log("No new notifications received.");
 
                 }
     
@@ -304,24 +274,25 @@ var GSNotifications = (function() {
             switch(n.category) {
 
                 case "POINT" :
-                    message += "+" + n.amount + " " + n.target;
+                    message = "+" + parseInt(n.detail, 10) + " " + n.subject;
                     break;
                 case "MISSION" :
                     if (n.type === "ADD") {
-                        message += "New Mission: " + n.target;
+                        message = "New Mission: " + n.subject;
                     } else if (n.type === "COMPLETE") {
-                        message += "Completed: " + n.target;
-                    } else {
-                        _log("please check notifications text generator. server " +
-                            "side data structure may has changed");
+                        message = "Completed: " + n.subject;
                     }
                     break;
                 case "BADGE":
-                    message += "Earned: " + n.target;
+                    message += "Earned: " + n.subject;
                     break;
                 default :
                     break;
 
+            }
+
+            if (n.message) {
+                message += " (" + n.message + ")";
             }
 
             var notificationNode = new _NotificationNode({
@@ -342,7 +313,6 @@ var GSNotifications = (function() {
             body.appendChild(n.node);
             
             setTimeout(_showNotification, 500+(i*500));
-            // setTimeout(_hideNotification, 500);
 
         }
 
@@ -422,7 +392,7 @@ var GSNotifications = (function() {
 
     }
 
-    function _sendAPIRequest(mParams, oAjaxParams, fnSuccessCallback, fnErrorCallback) {
+    function _sendAPIRequest(mParams, fnSuccessCallback) {
 
         var sUrl;
         var xmlHttpRequest = false;
@@ -434,13 +404,7 @@ var GSNotifications = (function() {
 
         }
 
-        if (oAjaxParams && typeof oAjaxParams.url === "string" && oAjaxParams.url !== ""){
-            
-            sUrl = oAjaxParams.url;
-
-        } else {
-           sUrl = _config.widgetProxyURL;            
-        }
+        sUrl = _config.widgetProxyURL;
             
         if (window.XMLHttpRequest) {
             // All Modern Browsers
@@ -472,15 +436,7 @@ var GSNotifications = (function() {
 
                     } else {
 
-                        if (typeof fnErrorCallback === "function") {
-
-                            fnErrorCallback(xmlHttpRequest);
-
-                        } else {
-
-                            console.log("[GamificationService] Server Error on request.");
-
-                        }
+                        console.log("[GamificationService] Server Error on request.");
 
                     }
 
@@ -512,7 +468,7 @@ var GSNotifications = (function() {
         if (typeof bState === "boolean"){
 
             _config.groupPoints = bState;
-            console.log("[Gamification Service] Grouping point notifications is now " + ((bState)? "enabled." : "disabled."));
+            _log("[Gamification Service] Grouping point notifications is now " + ((bState)? "enabled." : "disabled."));
 
         } else {
 
@@ -586,13 +542,11 @@ var GSNotifications = (function() {
         var reqParams ='{"id":1,"method":"getCurrentServerTime", "params":[]}';
         var request = JSON.parse(reqParams);
 
-        _sendAPIRequest(request, null, function (data) {
+        _sendAPIRequest(request, function (data) {
 
             if (data.result !== null) {
-
-                var serverTime = _formatDate(data.result);
-                _config.showNotificationsYoungerThan = serverTime;
-                console.log("[Gamification Service] Current server time: " + new Date(serverTime));
+                _config.showNotificationsYoungerThan = data.result;
+                _log("[Gamification Service] Current server time: " + new Date(data.result));
 
             }
 
@@ -608,19 +562,11 @@ var GSNotifications = (function() {
 
     }
     /**
-     * returns two arrays, containing your
-     * notifications history - latest 20 notifications from the server 
-     * (before the module was loaded) shown notifications - all notifications that
-     * the module already displayed
+     * returns all notifications which have been displayed since module has been initialized
      */
-
     function _getNotifications () {
 
-        var result ={
-            newNotifications : _notifications.haveBeenDisplayed,
-            history : _notifications.history
-        };
-        return result;
+        return _notifications.haveBeenDisplayed;
 
     }
     /**
@@ -685,7 +631,7 @@ var GSNotifications = (function() {
         if (typeof bState === "boolean"){
 
             _config.showPoints = bState;
-            console.log("[Gamification Service] Notifications for earned points are now " + ((bState)? "enabled." : "disabled."));
+            _log("[Gamification Service] Notifications for earned points are now " + ((bState)? "enabled." : "disabled."));
 
         } else {
 

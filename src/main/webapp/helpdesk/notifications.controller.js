@@ -24,25 +24,53 @@ sap.ui.controller("helpdesk.notifications", {
             // when the notifications widget is available, add an event listener to the 
             // notification event
             document.addEventListener("gs-notification-new", this.getNotifications);
-            document.addEventListener("gs-notification-history", this.getNotifications);
         }
     },
     getNotifications: function() {
         if (window.GSNotifications !== undefined) {
             console.log("[helpdesk] Received new notifications!");
-            var notifications = GSNotifications.getNotifications();
-            notifications.newNotifications = notifications.newNotifications.slice(0, 10);
-            notifications.history = notifications.history.slice(0, 6);
-            sap.ui.getCore().getModel("notifications").setData(notifications);
+            sap.ui.getCore().getModel("notifications").setData(GSNotifications.getNotifications());
         }
     },
+    /** 
+     * create meaningful messages for the user for every notification data set and add it  to the layout
+     **/
     oNotificationsTmpl: function(sId, oContext) {
-        var hLayout = new sap.ui.commons.layout.HorizontalLayout({
+        var n = oContext.getObject();
+        var message = "";
+        switch(n.category) {
+
+            case "POINT" :
+                message = "+" + parseInt(n.detail, 10) + " " + n.subject;
+                break;
+            case "MISSION" :
+                if (n.type === "ADD") {
+                    message = "New Mission: " + n.subject;
+                } else if (n.type === "COMPLETE") {
+                    message = "Completed: " + n.subject;
+                }
+                break;
+            case "BADGE":
+                message += "Earned: " + n.subject;
+                break;
+            default :
+                break;
+
+        }
+
+        if (n.message) {
+            message += " (" + n.message + ")";
+        }
+
+        var hLayout = new sap.ui.commons.layout.VerticalLayout({
                 width: "100%",
                 content: [
                     new sap.ui.commons.Label({
-                        text: "{message}"
-                    }),
+                        text: message
+                    }).addStyleClass("notification-message"),
+                    new sap.ui.commons.Label({
+                        text: new Date(n.dateCreated).toLocaleString()
+                    }).addStyleClass("notification-date"),
                 ]
             })
             .addStyleClass("notification-panel");
