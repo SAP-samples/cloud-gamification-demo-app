@@ -4,4 +4,4 @@ This code example includes a sample application named "HelpDesk" in order to dem
 
 Find out how to import the project to Eclipse or build it directly on the commandline via maven, deploy it, and try it out. We described all necessary steps here: [https://help.hana.ondemand.com/help > SAP HANA Cloud Platform > Services > Gamification Service (beta) > Case Study: Gamified Help Desk Application > HelpDesk App - Standalone Deployment](https://help.hana.ondemand.com/help/frameset.htm?eb90a443dde24b79b3428ac1fe27f26f.html).
 
-Make sure to pick the right release from "releases" above. Select the version equal to the Workbench version.
+Make sure to pick the right release from "releases" above. Select the version equal to the Workbench minor version.

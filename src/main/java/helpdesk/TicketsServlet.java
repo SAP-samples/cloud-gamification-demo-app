@@ -34,6 +34,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.sap.core.connectivity.api.DestinationException;
 import com.sap.core.connectivity.api.http.HttpDestination;
 
@@ -131,14 +133,22 @@ public class TicketsServlet extends HttpServlet {
 
       String gamificationServiceResponse = "";
 
-      // when the request only holds "initPlayer", send an empty event to the service to assure that the player is being
-      // created. this is not mandatory, as the player will always be created implicitly
+      // Create and initialize player.
       if (jb.toString().equals("initPlayer")) {
          try {
-            gamificationServiceResponse = initPlayerWithEmptyEvent(request.getRemoteUser());
+            // Check if player already exists
+            // if not, create player and then initialize player by sending the initPlayerForApp event
+            // if yes, do nothing. Assumption: Player is initialized.
+            String playerId = request.getRemoteUser();
+
+            if (!this.checkPlayerExists(playerId) && this.createPlayer(playerId)) {
+               this.initPlayerForHelpDesk(playerId);
+            }
+
          }
          catch (Exception e) {
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error retrieving user data: " + e.getMessage());
+            response
+                  .sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error while creating / initializing player " + e.getMessage());
          }
       }
       else {
@@ -162,8 +172,7 @@ public class TicketsServlet extends HttpServlet {
 
          }
          catch (Exception e) {
-            response.sendError(
-                  HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                   "Error sending requests to gamification service. Nested error: " + e.getMessage());
             return;
          }
@@ -178,24 +187,74 @@ public class TicketsServlet extends HttpServlet {
    }
 
    /**
-    * at the moment players are initiated implicitly, as soon as there are events sent for their playerID
+    * Check if player exists in gamification service
     * 
     * @param playerId
-    *           gamification service player id
     * @return
     * @throws ClientProtocolException
     * @throws IOException
     * @throws DestinationException
     * @throws NamingException
     */
-   private String initPlayerWithEmptyEvent(String playerId)
-         throws ClientProtocolException,
-         IOException,
-         DestinationException,
-         NamingException {
+   private boolean checkPlayerExists(String playerId) throws ClientProtocolException, IOException, DestinationException, NamingException {
+            
+      String jsonRPCrequest = "{\"method\": \"getPlayer\", \"params\": [ \"" + playerId + "\" ]}";
 
-      // create json event string. to initialize players, event name can be anything
-      String jsonRPCrequest = getEventStringFor(playerId, "dummyEvent", null);
+      String gamificationServiceResponse = sendGamificationEvent(jsonRPCrequest);
+      
+      JsonParser parser = new JsonParser();
+      JsonObject result = (JsonObject)parser.parse(gamificationServiceResponse);
+      
+      if (result.get("result").isJsonNull()) {
+         return false;
+      }
+      else {
+         return true;
+      }
+   }
+
+   /**
+    * Create a new player with given id
+    * 
+    * @param playerId
+    * @return
+    * @throws ClientProtocolException
+    * @throws IOException
+    * @throws DestinationException
+    * @throws NamingException
+    */
+   private boolean createPlayer(String playerId) throws ClientProtocolException, IOException, DestinationException, NamingException {
+
+      String jsonRPCrequest = "{\"method\":\"createPlayer\",\"id\":\"99\",\"params\":[\"" + playerId + "\"]}";
+
+      String gamificationServiceResponse = sendGamificationEvent(jsonRPCrequest);
+
+      JsonParser parser = new JsonParser();
+      JsonObject result = (JsonObject)parser.parse(gamificationServiceResponse);
+      
+      if (result.get("result").toString().equals("true")){      
+         return true;
+      }
+      else {
+         return false;
+      }
+   }
+
+   /**
+    * at the moment players are initiated implicitly, as soon as there are events sent for their playerID
+    * 
+    * @param playerId
+    * gamification service player id
+    * @return
+    * @throws ClientProtocolException
+    * @throws IOException
+    * @throws DestinationException
+    * @throws NamingException
+    */
+   private String initPlayerForHelpDesk(String playerId) throws ClientProtocolException, IOException, DestinationException, NamingException {
+
+      // create json event string to initialize players
+      String jsonRPCrequest = getEventStringFor(playerId, "initPlayerForApp", null);
 
       String gamificationServiceResponse = sendGamificationEvent(jsonRPCrequest);
 
@@ -209,20 +268,17 @@ public class TicketsServlet extends HttpServlet {
     * Tells the gamification service that a user has solved a problem
     * 
     * @param playerId
-    *           gamification service player id
+    * gamification service player id
     * @param relevance
-    *           ticket relevance, either <code>"critical"</code> or <code>""</code>
+    * ticket relevance, either <code>"critical"</code> or <code>""</code>
     * @return String containing the gamification service response
     * @throws NamingException
     * @throws DestinationException
     * @throws ClientProtocolException
     * @throws IOException
     */
-   private String tellGamificationServiceAboutSolvedProblem(String playerId, String relevance)
-         throws ClientProtocolException,
-         IOException,
-         DestinationException,
-         NamingException {
+   private String tellGamificationServiceAboutSolvedProblem(String playerId, String relevance) throws ClientProtocolException, IOException,
+         DestinationException, NamingException {
 
       // gamification event data
       String jsonRPCrequest = getEventStringFor(playerId, "solvedProblem", relevance);
@@ -246,7 +302,7 @@ public class TicketsServlet extends HttpServlet {
     */
    private String getEventStringFor(String playerId, String eventName, String relevance) {
 
-      String response = "{\"method\":\"receiveEvent\",\"id\":1, \"params\":[{\"siteId\":\"" + GAMIFICATION_SERVICE_APP + "\",\"type\":\""
+      String response = "{\"method\":\"handleEvent\", \"params\":[{\"type\":\""
             + eventName + "\",\"playerid\":\"" + playerId + "\",\"data\":{";
 
       if (relevance != null) {
@@ -260,19 +316,16 @@ public class TicketsServlet extends HttpServlet {
     * Creates and fires an HTTP Post request for the provided JSON event string.
     * 
     * @param jsonString
-    *           gamification service event formatted as JSON string
+    * gamification service event formatted as JSON string
     * @param response
-    *           original doPost HttpServletResponse for exception handling
+    * original doPost HttpServletResponse for exception handling
     * @return String serialized gamification service response msg
     * @throws ClientProtocolException
     * @throws NamingException
     * @throws IOException
     * @throws DestinationException
     */
-   private String sendGamificationEvent(String jsonString)
-         throws ClientProtocolException,
-         IOException,
-         DestinationException,
+   private String sendGamificationEvent(String jsonString) throws ClientProtocolException, IOException, DestinationException,
          NamingException {
 
       HttpClient httpClient = null;
