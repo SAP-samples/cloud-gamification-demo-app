@@ -82,7 +82,7 @@ sap.ui.controller("helpdesk.helpDesk", {
    * loads helpdesk tickets from server resets local notifications. this method
    * is called: - on application start - on logout (remark: no real logout.
    * only jumps back to welcome screen) - to reset tickets after all available
-   * tickets have been send.
+   * tickets have been sent.
    *
    * requests a list of tickets from the ticket servlet. all retrieved tickets
    * are stored in the global model will also reset any retrieved

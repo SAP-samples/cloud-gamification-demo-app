@@ -73,7 +73,7 @@ sap.ui.jsview("helpdesk.openTickets", {
     var notification = new sap.ui.core.HTML("notify", {
       width: "100%",
       height: "80px",
-      content: "<div id='notifyInnerDiv' class='hidden'>Your response has been send. You may continue.</div>",
+      content: "<div id='notifyInnerDiv' class='hidden'>Your response has been sent. You may continue.</div>",
       isVisible: false
     }).addStyleClass("hidden");
 
