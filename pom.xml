@@ -6,15 +6,15 @@
 	<groupId>com.sap.gamification</groupId>
 	<artifactId>helpdesk</artifactId>
 	<packaging>war</packaging>
-	<version>1.7.0</version>
+	<version>1.8.0</version>
 	<dependencies>
 		<!-- The SAP HANA Cloud Platform Java Web API -->
-		<dependency>
-			<groupId>com.sap.cloud</groupId>
-			<artifactId>neo-java-web-api</artifactId>
-			<version>1.66.13.1</version>
-			<scope>provided</scope>
-		</dependency>
+        <dependency>
+            <groupId>com.sap.cloud</groupId>
+            <artifactId>neo-java-web-api</artifactId>
+            <version>1.86.27</version>
+            <scope>provided</scope>
+        </dependency>
 		<!-- used to handle JSON transformation in servlets -->
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
