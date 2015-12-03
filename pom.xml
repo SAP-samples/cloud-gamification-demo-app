@@ -6,7 +6,7 @@
 	<groupId>com.sap.gamification</groupId>
 	<artifactId>helpdesk</artifactId>
 	<packaging>war</packaging>
-	<version>1.8.0</version>
+	<version>1.10.0</version>
 	<dependencies>
 		<!-- The SAP HANA Cloud Platform Java Web API -->
         <dependency>
