@@ -16,6 +16,8 @@ import java.util.Map;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.security.auth.login.LoginContext;
+import javax.security.auth.login.LoginException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -38,6 +40,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sap.core.connectivity.api.DestinationException;
 import com.sap.core.connectivity.api.http.HttpDestination;
+import com.sap.security.auth.login.LoginContextFactory;
 
 /**
  * This servlet serves as ticket provider (GET) and allows helpDesk users to send their ticket responses (POST).
@@ -115,6 +118,20 @@ public class TicketsServlet extends HttpServlet {
     */
    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
+      // check if the user context exists, if not login
+      String userId = request.getRemoteUser();
+      if (userId == null) {
+         LoginContext loginContext;
+         try {
+           loginContext = LoginContextFactory.createLoginContext();
+           loginContext.login();
+           userId = request.getRemoteUser();
+         } catch (LoginException e) {
+            logger.debug("Login failed.", e);
+         }
+       }
+      
+      
       StringBuffer jb = new StringBuffer();
       int intC;
       BufferedReader reader;
@@ -122,7 +139,7 @@ public class TicketsServlet extends HttpServlet {
          reader = request.getReader();
          while ((intC = reader.read()) != -1)
             jb.append((char) intC);
-         // limit upload to 50MB to prevent DoS attacks
+         // limit upload to 50MB
          if (jb.length() > 52428800) {
             throw new IllegalArgumentException("input too long");
          }
@@ -133,16 +150,13 @@ public class TicketsServlet extends HttpServlet {
 
       String gamificationServiceResponse = "";
 
-      // Create and initialize player.
+      // Create and prepare player.
       if (jb.toString().equals("initPlayer")) {
          try {
-            // Check if player already exists
-            // if not, create player and then initialize player by sending the initPlayerForApp event
-            // if yes, do nothing. Assumption: Player is initialized.
-            String playerId = request.getRemoteUser();
-
-            if (!this.checkPlayerExists(playerId) && this.createPlayer(playerId)) {
-               this.initPlayerForHelpDesk(playerId);
+            // Check if player already exists in the gamification service
+            // if not, create player and then trigger the init rule to automatically apply initial missions to the player
+            if (!this.checkPlayerExists(userId) && this.createPlayer(userId)) {
+               this.initPlayerForHelpDesk(userId);
             }
 
          }
@@ -168,7 +182,7 @@ public class TicketsServlet extends HttpServlet {
             // notify the gamification service
             // productive code additionally would need some plausibility checks here, e.g. to prevent
             // answering the same ticket thousands of times, causing DoS attacks etc.
-            gamificationServiceResponse = tellGamificationServiceAboutSolvedProblem(request.getRemoteUser(), relevance);
+            gamificationServiceResponse = tellGamificationServiceAboutSolvedProblem(userId, relevance);
 
          }
          catch (Exception e) {
@@ -225,7 +239,7 @@ public class TicketsServlet extends HttpServlet {
     */
    private boolean createPlayer(String playerId) throws ClientProtocolException, IOException, DestinationException, NamingException {
 
-      String jsonRPCrequest = "{\"method\":\"createPlayer\",\"id\":\"99\",\"params\":[\"" + playerId + "\"]}";
+      String jsonRPCrequest = "{\"method\":\"createPlayer\",\"params\":[\"" + playerId + "\"]}";
 
       String gamificationServiceResponse = sendGamificationEvent(jsonRPCrequest);
 
