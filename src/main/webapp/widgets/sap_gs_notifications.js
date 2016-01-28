@@ -1,701 +1,714 @@
 /**
  * Notification Module - SAP HANA Cloud Platform gamification service
- * 
+ *
  * This module can be embedded into any given web application. Its main purpose
  * is polling of new notifications for a specific user from a given gamification
  * service instance. The module and its API will be globally available as
  * GSNotifications.
- * 
+ *
  * Author: Axel Schröder
- * 
+ *
  * For questions please contact axel.schroeder01@sap.com
- * 
+ *
  */
-var GSNotifications = (function() {
+var GSNotifications = (function () {
 
-	// debug mode
-	var _debug = false;
+    // debug mode
+    var _debug = false;
 
-	// holds the interval
-	var _interval;
-	var _polling = false;
+    // holds the interval
+    var _interval;
+    var _polling = false;
 
-	// config at runtime
-	var _config = {};
+    // config at runtime
+    var _config = {};
 
-	// default config, dont touch!
-	var _defaultConfig = {
-		cssFile: "widgets/css/gs_notifications.css",
-		iconDefault: "widgets/images/NotificationOTHER.png",
-		defaultNotificationIcon: "Notification",
-		widgetProxyURL: "ProxyServlet/JsonRPC", // used to send request to gamification service without
-																// running into cross-origin problems
-		interval: 2000,
-		userName: "",
-		duration: 5000,
-		classList: "gs-notification",
-		defaultClass: "gs-notification",
-		limit: 3,
-		offset: 50, // initial distance from page bottom
-		showNotificationsYoungerThan: "",
-		showPoints: true,
-		stylePrimary: "background-color: #009de0",
-		styleSecondary: "background-color: #40BEF5",
-		appName: null,
-		groupPoints: true
-	};
+    // default config, dont touch!
+    var _defaultConfig = {
+        cssFile: "widgets/css/gs_notifications.css",
+        iconDefault: "widgets/images/NotificationOTHER.png",
+        defaultNotificationIcon: "Notification",
+        widgetProxyURL: "ProxyServlet/JsonRPC", // used to send request to gamification service without
+        // running into cross-origin problems
+        interval: 2000,
+        userName: "",
+        duration: 5000,
+        classList: "gs-notification",
+        defaultClass: "gs-notification",
+        limit: 3,
+        offset: 50, // initial distance from page bottom
+        showNotificationsYoungerThan: "",
+        showPoints: true,
+        stylePrimary: "background-color: #009de0",
+        styleSecondary: "background-color: #40BEF5",
+        appName: null,
+        groupPoints: true
+    };
 
-	// notifications will always fade upwards from bottom
-	var _highestBottom = _defaultConfig.offset;
+    // notifications will always fade upwards from bottom
+    var _highestBottom = _defaultConfig.offset;
 
-	// holds all notification data
-	// including all notifications that were already shown, that have to be displayed
-	// and the onse that are currently displayed..
-	var _notifications = {
-		toBeDisplayed: [],
-		haveBeenDisplayed: [],
-		processedIds: [],
-		displaying: []
-	};
+    // holds all notification data
+    // including all notifications that were already shown, that have to be displayed
+    // and the once that are currently displayed..
+    var _notifications = {
+        toBeDisplayed: [],
+        haveBeenDisplayed: [],
+        processedIds: [],
+        displaying: []
+    };
 
-	function _NotificationNode( options ) {
+    function _NotificationNode(options) {
 
-		this.iconSrc = (typeof options.iconSrc === "string") ? options.iconSrc : _config.iconDefault;
+        this.iconSrc = (typeof options.iconSrc === "string") ? options.iconSrc : _config.iconDefault;
 
-		this.message = (typeof options.message === "string") ? options.message : "unknown";
+        this.message = (typeof options.message === "string") ? options.message : "unknown";
 
-		this.classList = (typeof options.classList === "string") ? options.classList : _config.classList;
+        this.classList = (typeof options.classList === "string") ? options.classList : _config.classList;
 
-		this.id = (typeof options.id === "string") ? options.id : "";
+        this.id = (typeof options.id === "string") ? options.id : "";
 
-		this.bottom = (typeof options.bottom === "string") ? options.bottom : _config.offset;
+        this.bottom = (typeof options.bottom === "string") ? options.bottom : _config.offset;
 
-		if ( typeof options.importance === "string" ) {
+        if (typeof options.importance === "string") {
 
-			this.importance = options.importance;
+            this.importance = options.importance;
 
-		} else {
+        } else {
 
-			this.importance = "low";
+            this.importance = "low";
 
-		}
+        }
 
-		_NotificationNode.prototype.getNode = function() {
+        _NotificationNode.prototype.getNode = function () {
 
-			var node = document.createElement( "div" );
+            var node = document.createElement("div");
 
-			node.innerHTML = "<div><img></div>" + "<div class=\"gs-notification-content\">DummyContent</div>";
-			// node.className = this.classList + " " + this.importance;
-			node.className = this.classList;
-			node.importance = this.importance;
-			node.style.backgroundColor = (this.importance === "high") ? _config.stylePrimary
-				: _config.styleSecondary;
+            node.innerHTML = "<div><img></div>" + "<div class=\"gs-notification-content\">DummyContent</div>";
+            // node.className = this.classList + " " + this.importance;
+            node.className = this.classList;
+            node.importance = this.importance;
+            node.style.backgroundColor = (this.importance === "high") ? _config.stylePrimary
+                : _config.styleSecondary;
 
-			node.targetBottom = options.bottom;
-			node.id = "GSnotification_" + this.id;
+            node.targetBottom = options.bottom;
+            node.id = "GSnotification_" + this.id;
 
-			node.children[0].className = "gs-notification-icon";
-			node.children[0].children[0].src = this.iconSrc;
-			node.children[1].className = "gs-notification-content";
-			node.children[1].innerHTML = this.message;
+            node.children[0].className = "gs-notification-icon";
+            node.children[0].children[0].src = this.iconSrc;
+            node.children[1].className = "gs-notification-content";
+            node.children[1].innerHTML = this.message;
 
-			return node;
+            return node;
 
-		};
-	}
+        };
+    }
 
-	function _init( config ) {
+    function _init(config) {
 
-		_setConfig( config, true );
-		_injectCSSFile();
-		_getServerTime();
+        _setConfig(config, true);
+        _injectCSSFile();
+        _getServerTime();
 
-		// repeatedly let the module check for new notifications
-		clearInterval( _interval );
-		_interval = setInterval( _poll, _config.interval );
-		_log( "Notification module initialised." );
+        // repeatedly let the module check for new notifications
+        clearInterval(_interval);
+        _interval = setInterval(_poll, _config.interval);
+        _log("Notification module initialised.");
 
-		var loadedEvent = new CustomEvent( "gs-notification-ready" );
-		document.dispatchEvent( loadedEvent );
+        var loadedEvent = new CustomEvent("gs-notification-ready");
+        document.dispatchEvent(loadedEvent);
 
-	}
+    }
 
-	// Injects a <link> tag into the site header, which loads the corresponding css file
-	function _injectCSSFile() {
+    // Injects a <link> tag into the site header, which loads the corresponding css file
+    function _injectCSSFile() {
 
-		if ( document.getElementById( "GSNotificationCSS" ) === null ) {
+        if (document.getElementById("GSNotificationCSS") === null) {
 
-			var link = document.createElement( "link" );
-			link.id = "GSNotificationCSS";
-			link.href = _config.cssFile;
-			link.type = "text/css";
-			link.rel = "stylesheet";
-			document.getElementsByTagName( "head" )[0].appendChild( link );
+            var link = document.createElement("link");
+            link.id = "GSNotificationCSS";
+            link.href = _config.cssFile;
+            link.type = "text/css";
+            link.rel = "stylesheet";
+            document.getElementsByTagName("head")[0].appendChild(link);
 
-		}
+        }
 
-	}
+    }
 
-	function _getIconUrl( category, icon ) {
+    function _getIconUrl(category) {
 
-		return "widgets/images/Notification" + category + ".png";
+        return "widgets/images/Notification" + category + ".png";
 
-	}
+    }
 
-	function _poll() {
+    function _poll() {
 
-		var request = {
-			method: "getNotificationsForPlayer",
-			id: 1,
-			params: [ _config.userName, _config.showNotificationsYoungerThan ]
-		};
+        var parameters = {
+            method: "getNotificationsForPlayer",
+            id: 1,
+            params: [_config.userName, _config.showNotificationsYoungerThan]
+        };
 
-		_polling = true;
+        _polling = true;
 
-		_sendAPIRequest( request, function( data ) {
-			var prevNoti = {
-				index: 0,
-				target: ""
-			};
+        _sendAPIRequest(parameters, _onPollRequestSuccess);
 
-			if ( data.result !== null ) {
+    }
 
-				if ( data.result.length > 0 ) {
+    function _onPollRequestSuccess(data) {
 
-					// prepare notifications data, check if they werent already shown
-					for ( var i = 0; i < data.result.length; i++ ) {
+        if (!data.result) {
+            _log("Server Error: " + data.error);
+        }
 
-						// type conversion from float points to integer points
-						if ( data.result[i].category === "POINT" ) {
-							data.result[i].detail = parseInt( data.result[i].detail, 10 );
-						}
+        if (data.result instanceof Array) {
 
-						// only process notifications once
-						if ( _notifications.processedIds.indexOf( data.result[i].id ) === -1 ) {
+            var newNotifications = _processPollResult(data.result);
 
-							// everything that is no "point" notification, will be shown
-							if ( data.result[i].category !== "POINT" ) {
+            for (var i = 0; i < newNotifications.length; i++) {
 
-								_notifications.toBeDisplayed.push( data.result[i] );
+                // everything that is no "point" notification, will be displayed directly
+                if (newNotifications[i].category !== "POINT") {
 
-							} else if ( _config.showPoints ) {
+                    _notifications.toBeDisplayed.push(newNotifications[i]);
 
-								if ( !_config.groupPoints ) {
+                } else if (_config.showPoints) {
 
-									_notifications.toBeDisplayed.push( data.result[i] );
+                    if (!_config.groupPoints) {
 
-								} else {
+                        _notifications.toBeDisplayed.push(newNotifications[i]);
 
-									// check if there are already notifications to show
-									if ( _notifications.toBeDisplayed.length > 0 ) {
+                    } else {
 
-										// check planned notifications for equal point types that could be used
-										// for grouping with the current notification (data.result[i])
-										for ( var j = 0; j < _notifications.toBeDisplayed.length; j++ ) {
-											// add the amount to the already existing notification
-											if ( data.result[i].category === "POINT"
-												&& _notifications.toBeDisplayed[j].subject === data.result[i].subject
-												&& _notifications.toBeDisplayed[j].message === data.result[i].message ) {
-												_notifications.toBeDisplayed[j].detail += data.result[i].detail;
-												break;
-											}
-											// if the point type wasnt already existing, add it as a new notification
-											if ( j === _notifications.toBeDisplayed.length - 1 ) {
-												_notifications.toBeDisplayed.push( data.result[i] );
-												break;
-											}
-										}
+                        // check if there are already notifications to show
+                        if (_notifications.toBeDisplayed.length > 0) {
 
-									} else {
+                            // check planned notifications for equal point types that could be used
+                            // for grouping with the current notification (notifications[i])
+                            for (var j = 0; j < _notifications.toBeDisplayed.length; j++) {
+                                // add the amount to the already existing notification
+                                if (newNotifications[i].category === "POINT"
+                                    && _notifications.toBeDisplayed[j].subject === newNotifications[i].subject
+                                    && _notifications.toBeDisplayed[j].message === newNotifications[i].message) {
+                                    _notifications.toBeDisplayed[j].detail += newNotifications[i].detail;
+                                    break;
+                                }
+                                // no notification for grouping found -> add as new notification
+                                if (j === _notifications.toBeDisplayed.length - 1) {
+                                    _notifications.toBeDisplayed.push(newNotifications[i]);
+                                    break;
+                                }
+                            }
 
-										_notifications.toBeDisplayed.push( data.result[i] );
+                        } else {
 
-									}
+                            _notifications.toBeDisplayed.push(newNotifications[i]);
 
-								}
+                        }
 
-							}
+                    }
 
-							_notifications.processedIds.push( data.result[i].id );
+                }
 
-							// make sure to only request notifications that are younger than the once already
-							// received
-							if ( data.result[i].dateCreated > _config.showNotificationsYoungerThan ) {
-								_config.showNotificationsYoungerThan = data.result[i].dateCreated;
-							}
+                _notifications.processedIds.push(newNotifications[i].id);
 
-						}
+                // only request newer notifications next
+                if (newNotifications[i].dateCreated > _config.showNotificationsYoungerThan) {
+                    _config.showNotificationsYoungerThan = newNotifications[i].dateCreated;
+                }
 
-					}
+            }
 
-					_log( "Received " + data.result.length + " new notifications!" );
+            _log("Received " + newNotifications.length + " new notifications!");
 
-					// generate notifications
-					_prepareAndInjectNotifications();
+            // generate notifications
+            _prepareAndInjectNotifications();
 
-				} else {
+        }
 
-					_log( "No new notifications received." );
+        _polling = false;
+    }
 
-				}
+    function _processPollResult (newNotifications) {
 
-			} else {
+        // remove all notifications that have already been shown
+        newNotifications = newNotifications.filter(function (newNotification) {
+            return _notifications.processedIds.indexOf(newNotification.id) === -1;
+        });
 
-				_log( "Server Error: " + data.error );
+        // type conversion from float points to integer points
+        for (var i = 0; i < newNotifications.length; i++) {
+            if (newNotifications[i].category === "POINT") {
+                newNotifications[i].detail = parseInt(newNotifications[i].detail, 10);
+            }
+        }
 
-			}
+        return newNotifications;
+    }
 
-			_polling = false;
+    function _prepareAndInjectNotifications() {
 
-		} );
+        var body = document.getElementsByTagName("body")[0];
+        var limit = Math.min(_config.limit - _notifications.displaying.length, _notifications.toBeDisplayed.length);
 
-	}
-	function _prepareAndInjectNotifications() {
+        _highestBottom = _config.offset + _notifications.displaying.length * 60;
+        var message = "";
 
-		var body = document.getElementsByTagName( "body" )[0];
-		var limit = Math.min( _config.limit - _notifications.displaying.length, _notifications.toBeDisplayed.length );
+        for (var i = 0; i < limit; i++) {
 
-		_highestBottom = _config.offset + _notifications.displaying.length * 60;
-		var message = "";
+            var n = _notifications.toBeDisplayed[i];
+            message = "";
+            switch (n.category) {
 
-		for ( var i = 0; i < limit; i++ ) {
+                case "POINT":
+                    message = "+" + parseInt(n.detail, 10) + " " + n.subject;
+                    break;
+                case "MISSION":
+                    if (n.type === "ADD") {
+                        message = "New Mission: " + n.subject;
+                    } else if (n.type === "COMPLETE") {
+                        message = "Completed: " + n.subject;
+                    }
+                    break;
+                case "BADGE":
+                    message += "Earned: " + n.subject;
+                    break;
+                default:
+                    break;
 
-			var n = _notifications.toBeDisplayed[i];
-			message = "";
-			switch ( n.category ) {
+            }
 
-				case "POINT":
-					message = "+" + parseInt( n.detail, 10 ) + " " + n.subject;
-				break;
-				case "MISSION":
-					if ( n.type === "ADD" ) {
-						message = "New Mission: " + n.subject;
-					} else if ( n.type === "COMPLETE" ) {
-						message = "Completed: " + n.subject;
-					}
-				break;
-				case "BADGE":
-					message += "Earned: " + n.subject;
-				break;
-				default:
-				break;
+            if (n.message) {
+                message += " (" + n.message + ")";
+            }
 
-			}
+            var notificationNode = new _NotificationNode({
 
-			if ( n.message ) {
-				message += " (" + n.message + ")";
-			}
+                id: n.id,
+                message: message,
+                classList: _config.classList,
+                bottom: _highestBottom + i * 60,
+                iconSrc: _getIconUrl(n.category, n.icon),
+                importance: (n.category !== "POINT") ? "high" : "low"
 
-			var notificationNode = new _NotificationNode( {
+            });
 
-				id: n.id,
-				message: message,
-				classList: _config.classList,
-				bottom: _highestBottom + i * 60,
-				iconSrc: _getIconUrl( n.category, n.icon ),
-				importance: (n.category !== "POINT") ? "high" : "low"
+            n.node = notificationNode.getNode();
+            n.start = new Date().getTime();
+            n.duration = _config.duration;
 
-			} );
+            body.appendChild(n.node);
 
-			n.node = notificationNode.getNode();
-			n.start = new Date().getTime();
-			n.duration = _config.duration;
+            setTimeout(_showNotification, 500 + (i * 500));
 
-			body.appendChild( n.node );
+        }
 
-			setTimeout( _showNotification, 500 + (i * 500) );
+    }
 
-		}
+    function _showNotification() {
 
-	}
+        var n = _notifications.toBeDisplayed[0];
 
-	function _showNotification() {
+        if (n !== undefined && n.node !== undefined) {
 
-		var n = _notifications.toBeDisplayed[0];
+            n = _notifications.toBeDisplayed.shift();
+            n.node.className += " gs-notification-visible";
 
-		if ( n !== undefined && n.node !== undefined ) {
+            n.node.setAttribute("style", n.node.getAttribute("style") + "bottom: " + n.node.targetBottom
+                + "px;");
+            _notifications.displaying.push(n);
+            _calcNewBottoms();
+            setTimeout(_removeNotification, n.duration);
 
-			n = _notifications.toBeDisplayed.shift();
-			n.node.className += " gs-notification-visible";
+        }
 
-			n.node.setAttribute( "style", n.node.getAttribute( "style" ) + "bottom: " + n.node.targetBottom
-				+ "px;" );
-			_notifications.displaying.push( n );
-			_calcNewBottoms();
-			setTimeout( _removeNotification, n.duration );
+    }
 
-		}
+    function _removeNotification() {
 
-	}
-	function _removeNotification() {
+        var body = document.getElementsByTagName("body")[0];
 
-		var body = document.getElementsByTagName( "body" )[0];
+        var n = _notifications.displaying[0];
 
-		var n = _notifications.displaying[0];
+        if (n !== undefined && n.node !== undefined) {
 
-		if ( n !== undefined && n.node !== undefined ) {
+            n = _notifications.displaying.shift();
+            n.node.className = _config.classList;
+            _notifications.haveBeenDisplayed.push(n);
 
-			n = _notifications.displaying.shift();
-			n.node.className = _config.classList;
-			_notifications.haveBeenDisplayed.push( n );
+            var notificationsEvent = new CustomEvent("gs-notification-new");
+            document.dispatchEvent(notificationsEvent);
 
-			var notificationsEvent = new CustomEvent( "gs-notification-new" );
-			document.dispatchEvent( notificationsEvent );
+            setTimeout(function () {
 
-			setTimeout( function() {
+                body.removeChild(n.node);
+                _calcNewBottoms();
 
-				body.removeChild( n.node );
-				_calcNewBottoms();
+            }, 250);
 
-			}, 250 );
+        }
 
-		}
+    }
 
-	}
-	function _calcNewBottoms() {
+    function _calcNewBottoms() {
 
-		var style = "";
-		for ( var i = 0; i < _notifications.displaying.length; i++ ) {
+        var style = "";
+        for (var i = 0; i < _notifications.displaying.length; i++) {
 
-			style = (_notifications.displaying[i].node.importance === "high") ? _config.stylePrimary
-				: _config.styleSecondary;
-			style += "; ";
-			style += "bottom: " + (_config.offset + (i * 60)) + "px;";
+            style = (_notifications.displaying[i].node.importance === "high") ? _config.stylePrimary
+                : _config.styleSecondary;
+            style += "; ";
+            style += "bottom: " + (_config.offset + (i * 60)) + "px;";
 
-			_notifications.displaying[i].node.setAttribute( "style", style );
+            _notifications.displaying[i].node.setAttribute("style", style);
 
-		}
+        }
 
-	}
-	/**
-	 * manually polls notifications from the server.
-	 */
-	function _manualPoll() {
+    }
 
-		if ( !_polling ) {
+    /**
+     * manually polls notifications from the server.
+     */
+    function _manualPoll() {
 
-			clearInterval( _interval );
-			_poll();
-			_interval = setInterval( _poll, _config.interval );
+        if (!_polling) {
 
-		}
+            clearInterval(_interval);
+            _poll();
+            _interval = setInterval(_poll, _config.interval);
 
-	}
+        }
 
-	function _sendAPIRequest( mParams, fnSuccessCallback ) {
+    }
 
-		var sUrl;
-		var xmlHttpRequest = false;
-		var request = "json=" + JSON.stringify( mParams );
+    function _sendAPIRequest(mParams, fnSuccessCallback) {
 
-		if ( _config.appName !== null && _config.appName !== undefined && _config.appName !== "" ) {
+        var sUrl;
+        var xmlHttpRequest = false;
+        var request = "json=" + JSON.stringify(mParams);
 
-			request += "&app=" + _config.appName;
+        if (_config.appName !== null && _config.appName !== undefined && _config.appName !== "") {
 
-		}
+            request += "&app=" + _config.appName;
 
-		sUrl = _config.widgetProxyURL;
+        }
 
-		if ( window.XMLHttpRequest ) {
-			// All Modern Browsers
-			xmlHttpRequest = new XMLHttpRequest();
+        sUrl = _config.widgetProxyURL;
 
-		} else if ( window.ActiveXObject ) {
-			// IE6 + IE5
-			xmlHttpRequest = new ActiveXObject( "Microsoft.XMLHTTP" );
+        if (window.XMLHttpRequest) {
+            // All Modern Browsers
+            xmlHttpRequest = new XMLHttpRequest();
 
-		}
+        } else if (window.ActiveXObject) {
+            // IE6 + IE5
+            xmlHttpRequest = new ActiveXObject("Microsoft.XMLHTTP");
 
-		// If AJAX supported
-		if ( xmlHttpRequest !== false ) {
-			// Open Http Request connection
-			xmlHttpRequest.open( "POST", sUrl, true );
-			// Set request header (optional if GET method is used)
-			// xmlHttpRequest.setRequestHeader('Content-Type', 'application/json');
-			xmlHttpRequest.setRequestHeader( 'Content-Type', 'application/x-www-form-urlencoded' );
+        }
 
-			// Callback when ReadyState is changed.
-			xmlHttpRequest.onreadystatechange = function() {
+        // If AJAX supported
+        if (xmlHttpRequest !== false) {
+            // Open Http Request connection
+            xmlHttpRequest.open("POST", sUrl, true);
+            // Set request header (optional if GET method is used)
+            // xmlHttpRequest.setRequestHeader('Content-Type', 'application/json');
+            xmlHttpRequest.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
 
-				if ( xmlHttpRequest.readyState === 4 ) {
+            // Callback when ReadyState is changed.
+            xmlHttpRequest.onreadystatechange = function () {
 
-					if ( xmlHttpRequest.status === 200 ) {
+                if (xmlHttpRequest.readyState === 4) {
 
-						var data = JSON.parse( xmlHttpRequest.responseText );
-						fnSuccessCallback( data );
+                    if (xmlHttpRequest.status === 200) {
 
-					} else {
+                        var data = JSON.parse(xmlHttpRequest.responseText);
+                        fnSuccessCallback(data);
 
-						console.log( "[GamificationService] Server Error on request." );
+                    } else {
 
-					}
+                        console.log("[GamificationService] Server Error on request.");
 
-				}
+                    }
 
-			};
-			xmlHttpRequest.send( request );
+                }
 
-		} else {
+            };
+            xmlHttpRequest.send(request);
 
-			console.log( "[GamificationService] Notifications require a browser that supports ajax." );
+        } else {
 
-		}
-	}
-	function _log( sText ) {
+            console.log("[GamificationService] Notifications require a browser that supports ajax.");
 
-		if ( _debug ) {
+        }
+    }
 
-			console.log( "[GamificationService] " + sText );
+    function _log(sText) {
 
-		}
+        if (_debug) {
 
-	}
-	/**
-	 * group similar notifications together
-	 */
-	function _groupPoints( bState ) {
+            console.log("[GamificationService] " + sText);
 
-		if ( typeof bState === "boolean" ) {
+        }
 
-			_config.groupPoints = bState;
-			_log( "[Gamification Service] Grouping point notifications is now "
-				+ ((bState) ? "enabled." : "disabled.") );
+    }
 
-		} else {
+    /**
+     * group similar notifications together
+     */
+    function _groupPoints(bState) {
 
-			_log( "ERROR. " + bState + " must be of type boolean." );
+        if (typeof bState === "boolean") {
 
-		}
-	}
-	/**
-	 * multi app support: define the current app context. The module uses the default app as a default.
-	 */
-	function _setAppName( sAppName ) {
+            _config.groupPoints = bState;
+            _log("[Gamification Service] Grouping point notifications is now "
+                + ((bState) ? "enabled." : "disabled."));
 
-		if ( typeof sAppName === "string" && sAppName !== "" ) {
+        } else {
 
-			var oldApp = (_config.appName === undefined || _config.appName === null) ? "[DefaultApp]"
-				: _config.appName;
+            _log("ERROR. " + bState + " must be of type boolean.");
 
-			_config.appName = sAppName;
-			_log( "App context changed from: " + oldApp + " to " + sAppName );
+        }
+    }
 
-		} else {
+    /**
+     * multi app support: define the current app context. The module uses the default app as a default.
+     */
+    function _setAppName(sAppName) {
 
-			_log( "Please provide a valid string. App context continues to be "
-				+ (_config.appName === undefined || _config.appName === null) ? "default app" : _config.appName );
+        if (typeof sAppName === "string" && sAppName !== "") {
 
-		}
-	}
-	/**
-	 * expects an object with config parameters. see getConfig() for possible parameters
-	 */
-	function _setConfig( config ) {
+            var oldApp = (_config.appName === undefined || _config.appName === null) ? "[DefaultApp]"
+                : _config.appName;
 
-		var config = config || {};
+            _config.appName = sAppName;
+            _log("App context changed from: " + oldApp + " to " + sAppName);
 
-		if ( typeof config === "object" && config.length === undefined ) {
+        } else {
 
-			for ( var attr in _defaultConfig ) {
+            _log("Please provide a valid string. App context continues to be "
+            + (_config.appName === undefined || _config.appName === null) ? "default app" : _config.appName);
 
-				if ( config.hasOwnProperty( attr ) ) {
+        }
+    }
 
-					if ( attr === "classList" ) {
+    /**
+     * expects an object with config parameters. see getConfig() for possible parameters
+     */
+    function _setConfig(config) {
 
-						_setStyleClasses( config[attr] );
+        config = config || {};
 
-					} else {
+        if (typeof config === "object" && config.length === undefined) {
 
-						_config[attr] = config[attr];
+            for (var attr in _defaultConfig) {
 
-					}
+                if (config.hasOwnProperty(attr)) {
 
-				} else {
+                    if (attr === "classList") {
 
-					_config[attr] = _defaultConfig[attr];
+                        _setStyleClasses(config[attr]);
 
-				}
+                    } else {
 
-			}
+                        _config[attr] = config[attr];
 
-		} else {
+                    }
 
-			_log( "Config must be of type Object" );
+                } else {
 
-		}
+                    _config[attr] = _defaultConfig[attr];
 
-	}
-	function _getServerTime() {
+                }
 
-		var reqParams = '{"method":"getCurrentServerTime", "params":[]}';
-		var request = JSON.parse( reqParams );
+            }
 
-		_sendAPIRequest( request, function( data ) {
+        } else {
 
-			if ( data.result !== null ) {
-				_config.showNotificationsYoungerThan = data.result;
-				_log( "[Gamification Service] Current server time: " + new Date( data.result ) );
+            _log("Config must be of type Object");
 
-			}
+        }
 
-		} );
+    }
 
-	}
-	/**
-	 * returns the current module config
-	 */
-	function _getConfig() {
+    function _getServerTime() {
 
-		return _config;
+        var reqParams = '{"method":"getCurrentServerTime", "params":[]}';
+        var request = JSON.parse(reqParams);
 
-	}
-	/**
-	 * returns all notifications which have been displayed since module has been initialized
-	 */
-	function _getNotifications() {
+        _sendAPIRequest(request, function (data) {
 
-		return _notifications.haveBeenDisplayed;
+            if (data.result !== null) {
+                _config.showNotificationsYoungerThan = data.result;
+                _log("[Gamification Service] Current server time: " + new Date(data.result));
 
-	}
-	/**
-	 * sets the poll interval to the provided interval (default: 2000)
-	 */
-	function _setPollInterval( iInterval ) {
+            }
 
-		if ( typeof iInterval === "number" ) {
+        });
 
-			_config.interval = iInterval;
-			clearInterval( _interval );
-			_interval = setInterval( _poll, _config.interval );
-			_log( "Polling interval set to: " + iInterval + "ms." );
+    }
 
-		} else {
-			_log( "Interval must be an integer" );
-		}
+    /**
+     * returns the current module config
+     */
+    function _getConfig() {
 
-	}
-	/**
-	 * limits the simultaneously shown notifications to avoid spamming the user (default: 3)
-	 */
-	function _setNotificationLimit( iLimit ) {
+        return _config;
 
-		if ( isInt( iLimit ) && iLimit > 0 && iLimit <= 20 ) {
+    }
 
-			_config.limit = iLimit;
-			_log( "Maximum for visible notifications is now set to: " + _config.limit );
+    /**
+     * returns all notifications which have been displayed since module has been initialized
+     */
+    function _getNotifications() {
 
-		} else {
+        return _notifications.haveBeenDisplayed;
 
-			_log( "Please provide a valid number between 1 and 20" );
+    }
 
-		}
+    /**
+     * sets the poll interval to the provided interval (default: 2000)
+     */
+    function _setPollInterval(iInterval) {
 
-	}
-	/**
-	 * the module will poll notifications only from the specified user.
-	 */
-	function _setUserName( sUserName ) {
+        if (typeof iInterval === "number") {
 
-		if ( typeof sUserName === "string" ) {
+            _config.interval = iInterval;
+            clearInterval(_interval);
+            _interval = setInterval(_poll, _config.interval);
+            _log("Polling interval set to: " + iInterval + "ms.");
 
-			_config.userName = sUserName;
-			_log( "Notifications are now polled for User: " + sUserName );
+        } else {
+            _log("Interval must be an integer");
+        }
 
-		} else {
+    }
 
-			_log( "ERROR. " + sUserName + "must be of type string" );
+    /**
+     * limits the simultaneously shown notifications to avoid spamming the user (default: 3)
+     */
+    function _setNotificationLimit(limit) {
 
-		}
+        if (limit === parseInt(limit, 10) && limit > 0 && limit <= 20) {
 
-	}
-	/**
-	 * true (default) lets the module show all notifications including the very basic ones like "user gained
-	 * 1 point" false lets the module only display important notifications like "mission completed" or "badge
-	 * earned"
-	 */
-	function _showPoints( bState ) {
+            _config.limit = limit;
+            _log("Maximum for visible notifications is now set to: " + _config.limit);
 
-		if ( typeof bState === "boolean" ) {
+        } else {
 
-			_config.showPoints = bState;
-			_log( "[Gamification Service] Notifications for earned points are now "
-				+ ((bState) ? "enabled." : "disabled.") );
+            _log("Please provide a valid number between 1 and 20");
 
-		} else {
+        }
 
-			_log( "ERROR. " + bState + " must be of type boolean." );
+    }
 
-		}
+    /**
+     * the module will poll notifications only from the specified user.
+     */
+    function _setUserName(sUserName) {
 
-	}
-	/**
-	 * true (default) - provides detailed console output false - disable all console outputs
-	 */
-	function _setDebugMode( bState ) {
+        if (typeof sUserName === "string") {
 
-		if ( typeof bState === "boolean" ) {
+            _config.userName = sUserName;
+            _log("Notifications are now polled for User: " + sUserName);
 
-			_debug = bState;
-			_log( "DebugMode is now " + ((bState) ? "enabled." : "disabled.") );
+        } else {
 
-		} else {
+            _log("ERROR. " + sUserName + "must be of type string");
 
-			_log( "ERROR. " + bState + " must be of type boolean." );
+        }
 
-		}
+    }
 
-	}
-	/**
-	 * expects an array filled with strings. all contained strings will be appended as style class for each
-	 * notification
-	 */
-	function _setStyleClasses( sClassList ) {
+    /**
+     * true (default) lets the module show all notifications including the very basic ones like "user gained
+     * 1 point" false lets the module only display important notifications like "mission completed" or "badge
+     * earned"
+     */
+    function _showPoints(bState) {
 
-		if ( typeof sClassList === "object" && sClassList.length !== undefined ) {
+        if (typeof bState === "boolean") {
 
-			_config.classList = _defaultConfig.defaultClass;
-			for ( var i = 0; i < sClassList.length; i++ ) {
+            _config.showPoints = bState;
+            _log("[Gamification Service] Notifications for earned points are now "
+                + ((bState) ? "enabled." : "disabled."));
 
-				if ( typeof sClassList[i] === "string" ) {
+        } else {
 
-					_config.classList += " " + sClassList[i];
-					_log( "StyleClasses have been applied." );
+            _log("ERROR. " + bState + " must be of type boolean.");
 
-				} else if ( _debug ) {
+        }
 
-					_log( "RROR. " + sClassList + "must be an array filled with strings." );
+    }
 
-				}
+    /**
+     * true (default) - provides detailed console output false - disable all console outputs
+     */
+    function _setDebugMode(bState) {
 
-			}
+        if (typeof bState === "boolean") {
 
-		} else {
+            _debug = bState;
+            _log("DebugMode is now " + ((bState) ? "enabled." : "disabled."));
 
-			_log( "ERROR. " + sClassList + "must be an array filled with strings." );
+        } else {
 
-		}
+            _log("ERROR. " + bState + " must be of type boolean.");
 
-	}
+        }
 
-	return {
+    }
 
-		init: _init, // setup for first start
-		poll: _manualPoll, // manually poll, stops and restarts the poll interval
+    /**
+     * expects an array filled with strings. all contained strings will be appended as style class for each
+     * notification
+     */
+    function _setStyleClasses(sClassList) {
 
-		getConfig: _getConfig, // get current config
-		getNotifications: _getNotifications, // get data from all shown notifications
+        if (typeof sClassList === "object" && sClassList.length !== undefined) {
 
-		showPoints: _showPoints, // also display notifications from points (default:true)
-		setPollInterval: _setPollInterval, // set the polling interval (default: 7000ms)
-		setUserName: _setUserName, // define for which user the module is polling
-		setDebugMode: _setDebugMode, // switch debug mode on or off for more console output
-		setStyleClasses: _setStyleClasses, // list all styleclasses but dont forget to
-		setNotificationLimit: _setNotificationLimit,
-		restoreDefaultConfig: _setConfig,
-		setConfig: _setConfig,
-		setAppName: _setAppName, // multi app support
-		groupPoints: _groupPoints, // group similar notifications together
+            _config.classList = _defaultConfig.defaultClass;
+            for (var i = 0; i < sClassList.length; i++) {
 
-	};
+                if (typeof sClassList[i] === "string") {
+
+                    _config.classList += " " + sClassList[i];
+                    _log("StyleClasses have been applied.");
+
+                } else if (_debug) {
+
+                    _log("RROR. " + sClassList + "must be an array filled with strings.");
+
+                }
+
+            }
+
+        } else {
+
+            _log("ERROR. " + sClassList + "must be an array filled with strings.");
+
+        }
+
+    }
+
+    return {
+
+        init: _init, // setup for first start
+        poll: _manualPoll, // manually poll, stops and restarts the poll interval
+
+        getConfig: _getConfig, // get current config
+        getNotifications: _getNotifications, // get data from all shown notifications
+
+        showPoints: _showPoints, // also display notifications from points (default:true)
+        setPollInterval: _setPollInterval, // set the polling interval (default: 7000ms)
+        setUserName: _setUserName, // define for which user the module is polling
+        setDebugMode: _setDebugMode, // switch debug mode on or off for more console output
+        setStyleClasses: _setStyleClasses, // list all styleclasses but dont forget to
+        setNotificationLimit: _setNotificationLimit,
+        restoreDefaultConfig: _setConfig,
+        setConfig: _setConfig,
+        setAppName: _setAppName, // multi app support
+        groupPoints: _groupPoints, // group similar notifications together
+
+    };
 
 }());
