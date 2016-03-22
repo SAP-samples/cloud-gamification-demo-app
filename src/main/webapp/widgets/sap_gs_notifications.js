@@ -333,12 +333,11 @@ var GSNotifications = (function () {
 
         if (n !== undefined && n.node !== undefined) {
 
-            n = _notifications.displaying.shift();
-            n.node.className = _config.classList;
-            _notifications.haveBeenDisplayed.push(n);
-
-            var notificationsEvent = new CustomEvent("gs-notification-new");
-            document.dispatchEvent(notificationsEvent);
+			n = _notifications.displaying.shift();
+			n.node.className = _config.classList;
+			_notifications.haveBeenDisplayed.unshift( n );
+			var notificationsEvent = new CustomEvent( "gs-notification-new" );
+			document.dispatchEvent( notificationsEvent );
 
             setTimeout(function () {
 
@@ -561,7 +560,7 @@ var GSNotifications = (function () {
      */
     function _getNotifications() {
 
-        return _notifications.haveBeenDisplayed;
+		return _notifications.haveBeenDisplayed.slice();
 
     }
 
