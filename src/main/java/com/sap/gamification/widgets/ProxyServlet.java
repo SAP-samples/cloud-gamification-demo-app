@@ -24,6 +24,7 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
@@ -38,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
+import com.sap.core.connectivity.api.DestinationException;
 import com.sap.core.connectivity.api.http.HttpDestination;
 
 /**
@@ -98,7 +100,7 @@ public class ProxyServlet extends HttpServlet {
       catch (NamingException e) {
          String errorMessage = "Lookup of destination failed with reason: " + e.getMessage() + ". See "
                + "logs for details. Hint: Make sure to have the destination " + GAMIFICATION_SERVICE_WIDGET_DESTINATION + " configured.";
-         logger.error(errorMessage, e);
+         logger.debug(errorMessage, e);
          response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, errorMessage);
       }
    }
@@ -119,8 +121,8 @@ public class ProxyServlet extends HttpServlet {
          String app = request.getParameter("app");
 
          if (json == null) {
-            logger.error("Invalid request");
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid Request. Don't forget to set the URL parameters json");
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST,
+                  "Invalid Request. Expects parameters 'json' and 'app' as url parameters.");
             return;
          }
          else {
@@ -130,7 +132,8 @@ public class ProxyServlet extends HttpServlet {
          }
       }
       catch (Exception e) {
-         logger.error("Forwarding data to Gamification Service failed: " + e.getMessage(), e);
+         logger.debug("Forwarding data to Gamification Service failed. Hint: Make sure to have an HTTP proxy configured in your "
+               + "local Eclipse environment in case your environment uses an HTTP proxy for the outbound Internet communication.", e);
          response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
       }
    }
@@ -212,7 +215,6 @@ public class ProxyServlet extends HttpServlet {
 
                if (statusCode != HTTP_OK) {
                   String errorMessage = "Expected response status code is 200 but it is " + statusCode + " . Server Response: " + response;
-                  logger.error(errorMessage);
                   throw new ServletException(errorMessage);
                }
 
@@ -220,30 +222,20 @@ public class ProxyServlet extends HttpServlet {
             else {
 
                String errorMessage = "Expected response status code is 200 but it is " + statusCode + " . Server Response: " + response;
-               logger.error(errorMessage);
                throw new ServletException(errorMessage);
             }
          }
 
          return response;
       }
-      catch (NamingException e) {
-         String errorMessage = "Lookup of destination failed with reason: " + e.getMessage() + ". See "
-               + "logs for details. Hint: Make sure to have the destination " + GAMIFICATION_SERVICE_WIDGET_DESTINATION + " configured.";
-         logger.error(errorMessage, e);
-         throw new ServletException(errorMessage, e);
-      }
-      catch (Exception e) {
-         String errorMessage = "Connectivity operation failed with reason: " + e.getMessage() + ". See "
-               + "logs for details. Hint: Make sure to have an HTTP proxy configured in your "
-               + "local Eclipse environment in case your environment uses " + "an HTTP proxy for the outbound Internet " + "communication.";
-         logger.error(errorMessage, e);
+      catch (NamingException | DestinationException e) {
+         String errorMessage = "Lookup of destination failed with reason: " + e.getMessage() + ". Hint: Make sure to have the destination "
+               + GAMIFICATION_SERVICE_WIDGET_DESTINATION + " configured.";
          throw new ServletException(errorMessage, e);
       }
       finally {
          // When HttpClient instance is no longer needed, shut down the
-         // connection manager to ensure
-         // deallocation of all system resources
+         // connection manager to ensure deallocation of all system resources
          if (httpClient != null) {
             httpClient.getConnectionManager().shutdown();
          }
@@ -265,47 +257,44 @@ public class ProxyServlet extends HttpServlet {
       }
       catch (Exception e) {
          String errorMessage = "error with POST data. could not be serialized:";
-         logger.error(errorMessage, e);
-
          throw new ServletException(errorMessage, e);
       }
       finally {
+
          try {
             EntityUtils.consume(httpEntity);
+         }
+         catch (IOException e) {
+            logger.error("Failed to release resources in finally block", e);
+         }
+
+         try {
             if (reader != null) {
                reader.close();
             }
          }
          catch (IOException e) {
-            logger.error(e.getMessage());
+            logger.error("Failed to close reader in finally block", e);
          }
+
       }
       return buffer.toString();
    }
 
-   private final String fetchToken(HttpClient httpClient, HttpContext httpContext) {
+   private final String fetchToken(HttpClient httpClient, HttpContext httpContext) throws ClientProtocolException, IOException {
       HttpGet request = new HttpGet();
 
       request.setHeader("X-CSRF-Token", "Fetch");
 
-      HttpResponse response;
-      try {
-         response = httpClient.execute(request, httpContext);
-         String token = response.getFirstHeader("X-CSRF-Token").getValue();
+      HttpResponse response = httpClient.execute(request, httpContext);
+      String token = response.getFirstHeader("X-CSRF-Token").getValue();
 
-         EntityUtils.consume(response.getEntity());
+      EntityUtils.consume(response.getEntity());
 
-         if (token.length() < 10) {
-            logger.error("error fetching token - response: " + response);
-            throw new SecurityException("Gamification server returned error while fetching CSRF token: " + response);
-         }
-         return token;
+      if (token.length() < 10) {
+         throw new SecurityException("Gamification server returned error while fetching CSRF token: " + response);
       }
-      catch (Exception e) {
-         logger.error("Error fetching XSRF-Token: ", e);
-         return null;
-      }
-
+      return token;
    }
 
 }

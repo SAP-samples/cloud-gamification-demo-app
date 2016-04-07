@@ -33,6 +33,11 @@ sap.ui.controller("helpdesk.openTickets", {
                     alert("There are conflicts in your rules. "+
                         "Consider updating your Rule Engine in the GS Workbench. \n\n" + data.substring(data.indexOf("error") + 8));
                 }
+            },
+            error: function (jqXHR, status, errorThrown) {
+                console.error(jqXHR.responseText);
+                sap.ui.commons.MessageBox.alert(jqXHR.responseText, null, "Error during request");
+
             }
         });
     },
@@ -40,7 +45,7 @@ sap.ui.controller("helpdesk.openTickets", {
     /**
      *  called when the response has been send
      */
-    onTicketSendBtnPress: function(oControlEvent) {
+    onTicketSendBtnPress: function() {
         var model = sap.ui.getCore().getModel();
         var data = model.getData();
         var response = data.response_text;

@@ -145,7 +145,8 @@ public class TicketsServlet extends HttpServlet {
          }
       }
       catch (IOException e) {
-         response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error serializing request");
+         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+         response.getWriter().write("Error while serializing request");
       }
 
       String gamificationServiceResponse = "";
@@ -161,8 +162,8 @@ public class TicketsServlet extends HttpServlet {
 
          }
          catch (Exception e) {
-            response
-                  .sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Error while creating / initializing player " + e.getMessage());
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("Error while creating / initializing player: " + e.getMessage());
          }
       }
       else {
@@ -186,15 +187,14 @@ public class TicketsServlet extends HttpServlet {
 
          }
          catch (Exception e) {
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                  "Error sending requests to gamification service. Nested error: " + e.getMessage());
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("Error sending requests to gamification service. Nested error: " + e.getMessage());
             return;
          }
 
       }
 
-      // create a doPost Servlet Response; include response from
-      // gamification service
+      // include response from gamification service
       String doPostResponse = "{\"gamificationservice\": " + gamificationServiceResponse + "}";
 
       response.getWriter().println(doPostResponse);
