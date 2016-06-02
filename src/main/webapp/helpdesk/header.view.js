@@ -45,7 +45,7 @@ sap.ui.jsview("helpdesk.header", {
         }).addStyleClass("nav-item"));
 
         // add user panel (top right)
-        userContainer.addContent(new sap.ui.commons.Link({
+        userContainer.addContent(new sap.ui.commons.Link("profileLink", {
             text: "{userdata>/firstname}",
             press: function() {
                 appController.show("profile");

@@ -162,6 +162,7 @@ public class TicketsServlet extends HttpServlet {
 
          }
          catch (Exception e) {
+            
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write("Error while creating / initializing player: " + e.getMessage());
          }
@@ -381,7 +382,6 @@ public class TicketsServlet extends HttpServlet {
          // Check response status code
          int statusCode = gamificationServiceResponse.getStatusLine().getStatusCode();
          if (statusCode != HTTP_OK) {
-            logger.error(gamificationServiceResponse.getStatusLine().toString());
             throw new IllegalStateException(gamificationServiceResponse.getStatusLine().toString());
          }
 
