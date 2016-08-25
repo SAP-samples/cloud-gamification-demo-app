@@ -215,7 +215,7 @@ public class TicketsServlet extends HttpServlet {
             
       String jsonRPCrequest = "{\"method\": \"getPlayer\", \"params\": [ \"" + playerId + "\" ]}";
 
-      String gamificationServiceResponse = sendGamificationEvent(jsonRPCrequest);
+      String gamificationServiceResponse = requestGamificationService(jsonRPCrequest);
       
       JsonParser parser = new JsonParser();
       JsonObject result = (JsonObject)parser.parse(gamificationServiceResponse);
@@ -242,7 +242,7 @@ public class TicketsServlet extends HttpServlet {
 
       String jsonRPCrequest = "{\"method\":\"createPlayer\",\"params\":[\"" + playerId + "\"]}";
 
-      String gamificationServiceResponse = sendGamificationEvent(jsonRPCrequest);
+      String gamificationServiceResponse = requestGamificationService(jsonRPCrequest);
 
       JsonParser parser = new JsonParser();
       JsonObject result = (JsonObject)parser.parse(gamificationServiceResponse);
@@ -271,7 +271,7 @@ public class TicketsServlet extends HttpServlet {
       // create json event string to initialize players
       String jsonRPCrequest = getEventStringFor(playerId, "initPlayerForApp", null);
 
-      String gamificationServiceResponse = sendGamificationEvent(jsonRPCrequest);
+      String gamificationServiceResponse = requestGamificationService(jsonRPCrequest);
 
       // create a request response that contains the original request and forwards the response from the gamification
       // service
@@ -298,7 +298,7 @@ public class TicketsServlet extends HttpServlet {
       // gamification event data
       String jsonRPCrequest = getEventStringFor(playerId, "solvedProblem", relevance);
 
-      String gamificationServiceResponse = sendGamificationEvent(jsonRPCrequest);
+      String gamificationServiceResponse = requestGamificationService(jsonRPCrequest);
 
       // create a request response that contains the original request and forwards the response from the gamification
       // service
@@ -340,7 +340,7 @@ public class TicketsServlet extends HttpServlet {
     * @throws IOException
     * @throws DestinationException
     */
-   private String sendGamificationEvent(String jsonString) throws ClientProtocolException, IOException, DestinationException,
+   private String requestGamificationService(String jsonString) throws ClientProtocolException, IOException, DestinationException,
          NamingException {
 
       HttpClient httpClient = null;
