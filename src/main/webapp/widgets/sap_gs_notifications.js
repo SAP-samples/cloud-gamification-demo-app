@@ -259,30 +259,37 @@ var GSNotifications = (function () {
 
             var n = _notifications.toBeDisplayed[i];
             message = "";
-            switch (n.category) {
-
-                case "POINT":
-                    message = "+" + parseInt(n.detail, 10) + " " + n.subject;
-                    break;
-                case "MISSION":
-                    if (n.type === "ADD") {
-                        message = "New Mission: " + n.subject;
-                    } else if (n.type === "COMPLETE") {
-                        message = "Completed: " + n.subject;
-                    }
-                    break;
-                case "BADGE":
-                    message += "Earned: " + n.subject;
-                    break;
-                default:
-                    break;
-
+            
+            if (n.type === "CUSTOM") {
+            	
+            	message = n.message;
+            	
+            } else {
+            	
+            	switch (n.category) {
+	                case "POINT":
+	                    message = "+" + parseInt(n.detail, 10) + " " + n.subject;
+	                    break;
+	                case "MISSION":
+	                    if (n.type === "ADD") {
+	                        message = "New Mission: " + n.subject;
+	                    } else if (n.type === "COMPLETE") {
+	                        message = "Completed: " + n.subject;
+	                    }
+	                    break;
+	                case "BADGE":
+	                    message += "Earned: " + n.subject;
+	                    break;
+	                default:
+	                    break;
+	
+	            }
+            	
+                if (n.message) {
+                    message += " (" + n.message + ")";
+                }
             }
-
-            if (n.message) {
-                message += " (" + n.message + ")";
-            }
-
+            
             var notificationNode = new _NotificationNode({
 
                 id: n.id,

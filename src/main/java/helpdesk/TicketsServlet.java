@@ -123,15 +123,15 @@ public class TicketsServlet extends HttpServlet {
       if (userId == null) {
          LoginContext loginContext;
          try {
-           loginContext = LoginContextFactory.createLoginContext();
-           loginContext.login();
-           userId = request.getRemoteUser();
-         } catch (LoginException e) {
+            loginContext = LoginContextFactory.createLoginContext();
+            loginContext.login();
+            userId = request.getRemoteUser();
+         }
+         catch (LoginException e) {
             logger.debug("Login failed.", e);
          }
-       }
-      
-      
+      }
+
       StringBuffer jb = new StringBuffer();
       int intC;
       BufferedReader reader;
@@ -147,6 +147,7 @@ public class TicketsServlet extends HttpServlet {
       catch (IOException e) {
          response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
          response.getWriter().write("Error while serializing request");
+         return;
       }
 
       String gamificationServiceResponse = "";
@@ -155,16 +156,18 @@ public class TicketsServlet extends HttpServlet {
       if (jb.toString().equals("initPlayer")) {
          try {
             // Check if player already exists in the gamification service
-            // if not, create player and then trigger the init rule to automatically apply initial missions to the player
+            // if not, create player and then trigger the init rule to automatically apply initial missions to the
+            // player
             if (!this.checkPlayerExists(userId) && this.createPlayer(userId)) {
                this.initPlayerForHelpDesk(userId);
             }
 
          }
          catch (Exception e) {
-            
+
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write("Error while creating / initializing player: " + e.getMessage());
+            return;
          }
       }
       else {
@@ -197,7 +200,6 @@ public class TicketsServlet extends HttpServlet {
 
       // include response from gamification service
       String doPostResponse = "{\"gamificationservice\": " + gamificationServiceResponse + "}";
-
       response.getWriter().println(doPostResponse);
    }
 
@@ -212,14 +214,14 @@ public class TicketsServlet extends HttpServlet {
     * @throws NamingException
     */
    private boolean checkPlayerExists(String playerId) throws ClientProtocolException, IOException, DestinationException, NamingException {
-            
+
       String jsonRPCrequest = "{\"method\": \"getPlayer\", \"params\": [ \"" + playerId + "\" ]}";
 
       String gamificationServiceResponse = requestGamificationService(jsonRPCrequest);
-      
+
       JsonParser parser = new JsonParser();
-      JsonObject result = (JsonObject)parser.parse(gamificationServiceResponse);
-      
+      JsonObject result = (JsonObject) parser.parse(gamificationServiceResponse);
+
       if (result.get("result").isJsonNull()) {
          return false;
       }
@@ -245,9 +247,9 @@ public class TicketsServlet extends HttpServlet {
       String gamificationServiceResponse = requestGamificationService(jsonRPCrequest);
 
       JsonParser parser = new JsonParser();
-      JsonObject result = (JsonObject)parser.parse(gamificationServiceResponse);
-      
-      if (result.get("result").toString().equals("true")){      
+      JsonObject result = (JsonObject) parser.parse(gamificationServiceResponse);
+
+      if (result.get("result").toString().equals("true")) {
          return true;
       }
       else {
@@ -317,8 +319,8 @@ public class TicketsServlet extends HttpServlet {
     */
    private String getEventStringFor(String playerId, String eventName, String relevance) {
 
-      String response = "{\"method\":\"handleEvent\", \"params\":[{\"type\":\""
-            + eventName + "\",\"playerid\":\"" + playerId + "\",\"data\":{";
+      String response = "{\"method\":\"handleEvent\", \"params\":[{\"type\":\"" + eventName + "\",\"playerid\":\"" + playerId
+            + "\",\"data\":{";
 
       if (relevance != null) {
          response += "\"relevance\":\"" + relevance + "\",\"processTime\":20";
