@@ -6,13 +6,13 @@
 	<groupId>com.sap.gamification</groupId>
 	<artifactId>helpdesk</artifactId>
 	<packaging>war</packaging>
-	<version>1.28.0</version>
+	<version>1.32.0</version>
 
 	<properties>
 		<ldi.jacoco.skip/>
 	</properties>
 	<dependencies>
-		<!-- The SAP HANA Cloud Platform Java Web API -->
+		<!-- The SAP Cloud Platform Java Web API -->
         <dependency>
             <groupId>com.sap.cloud</groupId>
             <artifactId>neo-java-web-api</artifactId>

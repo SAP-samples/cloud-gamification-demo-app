@@ -47,7 +47,7 @@
     </auth-constraint>
   </security-constraint>
   <security-role>
-    <description>All SAP HANA Cloud Platform users with the role "helpdesk" assigned</description>
+    <description>All SAP Cloud Platform users with the role "helpdesk" assigned</description>
     <role-name>helpdesk</role-name>
   </security-role>
   <resource-ref>

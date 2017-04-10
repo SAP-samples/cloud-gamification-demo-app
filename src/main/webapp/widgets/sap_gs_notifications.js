@@ -1,14 +1,10 @@
 /**
- * Notification Module - SAP HANA Cloud Platform gamification service
+ * Notification Module - SAP Cloud Platform Gamification
  *
  * This module can be embedded into any given web application. Its main purpose
  * is polling of new notifications for a specific user from a given gamification
  * service instance. The module and its API will be globally available as
  * GSNotifications.
- *
- * Author: Axel Schröder
- *
- * For questions please contact axel.schroeder01@sap.com
  *
  */
 var GSNotifications = (function () {

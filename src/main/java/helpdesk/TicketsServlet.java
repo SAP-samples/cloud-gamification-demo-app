@@ -59,9 +59,9 @@ public class TicketsServlet extends HttpServlet {
    // default appname = HelpDesk, when not set in VM args
    private static final String GAMIFICATION_SERVICE_APP = System.getProperty("gamification.demoapp.appname", "HelpDesk");
 
-   // This destination needs to be configured in your HCP runtime.
-   // As you saw in the documentation, if you run this on your local HCP configure the following destination (double
-   // click server > Connectivity > New Destination), name "gsdest", URL
+   // This destination needs to be configured in your SAP Cloud Platform runtime.
+   // As you saw in the documentation, if you run this on your local SAP Cloud Platform configure the following
+   // destination (double click server > Connectivity > New Destination), name "gsdest", URL
    // "http://localhost:8080/gamification/api/tech/JsonRPC", Authentication "BasicAuthentication", User and Password of
    // a user with "AppAdmin" and "AppStandard" roles defined in the Users tab
    private static final String GAMIFICATION_SERVICE_DESTINATION = "gsdest";
@@ -90,6 +90,7 @@ public class TicketsServlet extends HttpServlet {
    /**
     * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
     */
+   @Override
    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
       response.setContentType("application/json");
@@ -116,6 +117,7 @@ public class TicketsServlet extends HttpServlet {
    /**
     * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
     */
+   @Override
    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
       // check if the user context exists, if not login
@@ -192,7 +194,14 @@ public class TicketsServlet extends HttpServlet {
          }
          catch (Exception e) {
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.getWriter().write("Error sending requests to gamification service. Nested error: " + e.getMessage());
+            if (e.getMessage().contains(GAMIFICATION_SERVICE_APP)) {
+               // shorten the original message
+               // "App HelpDesk does not exist. Please provide an existing App or none for defaultApp."
+               response.getWriter().write("Make sure '" + GAMIFICATION_SERVICE_APP + "' app has been created.");
+            }
+            else {
+               response.getWriter().write("Gamification service responded: " + e.getMessage());
+            }
             return;
          }
 
@@ -367,9 +376,9 @@ public class TicketsServlet extends HttpServlet {
          post.setEntity(new UrlEncodedFormEntity(urlParameters));
 
          // execute request, send POST to gamification service
+         logger.debug("Sending request to destination " + GAMIFICATION_SERVICE_DESTINATION + " (App: " + GAMIFICATION_SERVICE_APP
+               + ") --> " + jsonString);
          HttpResponse gamificationServiceResponse = httpClient.execute(post);
-         logger.debug("[Helpdesk TicketServlet] sending event to destination " + GAMIFICATION_SERVICE_DESTINATION + " (App: "
-               + GAMIFICATION_SERVICE_APP + ") --> " + jsonString);
 
          // serialize gamification service response
 
@@ -380,14 +389,22 @@ public class TicketsServlet extends HttpServlet {
          while ((l = reader.readLine()) != null) {
             buffer.append(l);
          }
+         String response = buffer.toString();
 
          // Check response status code
          int statusCode = gamificationServiceResponse.getStatusLine().getStatusCode();
          if (statusCode != HTTP_OK) {
-            throw new IllegalStateException(gamificationServiceResponse.getStatusLine().toString());
+            String errorMessage = null;
+            try {
+               errorMessage = new JsonParser().parse(response).getAsJsonObject().get("error").getAsString();
+            }
+            catch (Exception e) {
+               errorMessage = gamificationServiceResponse.getStatusLine().toString() + ": " + response;
+            }
+            throw new IllegalStateException(errorMessage);
          }
 
-         return buffer.toString();
+         return response;
       }
       finally {
          // When HttpClient instance is no longer needed, shut down the
