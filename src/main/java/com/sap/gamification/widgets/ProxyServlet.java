@@ -44,7 +44,7 @@ import com.sap.core.connectivity.api.http.HttpDestination;
 
 /**
  * This servlet acts as a proxy to consume Gamification Service widgets. Depending on the deployment reported by VM
- * arguments, it communcates directly (same origin) or via destination (foreign destination).
+ * arguments, it communicates directly (same origin) or via destination (foreign destination).
  * 
  * Available Widgets
  * 
@@ -66,6 +66,7 @@ public class ProxyServlet extends HttpServlet {
    /**
     * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
     */
+   @Override
    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
       String user = request.getRemoteUser();
@@ -108,6 +109,7 @@ public class ProxyServlet extends HttpServlet {
    /**
     * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
     */
+   @Override
    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
       try {
          String user = request.getRemoteUser();
