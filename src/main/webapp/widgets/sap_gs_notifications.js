@@ -235,12 +235,13 @@ var GSNotifications = (function () {
 
         // type conversion from float points to integer points
         for (var i = 0; i < newNotifications.length; i++) {
-            if (newNotifications[i].category === "POINT") {
+        	if (newNotifications[i].category === "POINT" && newNotifications[i].detail != null) {
                 newNotifications[i].detail = parseInt(newNotifications[i].detail, 10);
             }
         }
 
         return newNotifications;
+        
     }
 
     function _prepareAndInjectNotifications() {

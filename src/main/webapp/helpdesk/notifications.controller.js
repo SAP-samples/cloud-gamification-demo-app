@@ -41,8 +41,12 @@ sap.ui.controller("helpdesk.notifications", {
         switch(n.category) {
 
             case "POINT" :
-                message = "+" + parseInt(n.detail, 10) + " " + n.subject;
-                break;
+            	if (n.type !== "CUSTOM"){
+            		message = "+" + parseInt(n.detail, 10) + " " + n.subject;
+            	} else {
+            		message = n.message;
+            	}
+            	break;
             case "MISSION" :
                 if (n.type === "ADD") {
                     message = "New Mission: " + n.subject;
@@ -55,7 +59,6 @@ sap.ui.controller("helpdesk.notifications", {
                 break;
             default :
                 break;
-
         }
 
         if (n.message) {
