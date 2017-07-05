@@ -102,7 +102,7 @@ var GSNotifications = (function () {
 
     function _init(config) {
 
-        _setConfig(config, true);
+        _setConfig(config);
         _injectCSSFile();
         _getServerTime();
 
@@ -235,7 +235,7 @@ var GSNotifications = (function () {
 
         // type conversion from float points to integer points
         for (var i = 0; i < newNotifications.length; i++) {
-        	if (newNotifications[i].category === "POINT" && newNotifications[i].detail != null) {
+            if (newNotifications[i].category === "POINT" && newNotifications[i].detail != null) {
                 newNotifications[i].detail = parseInt(newNotifications[i].detail, 10);
             }
         }
@@ -250,38 +250,37 @@ var GSNotifications = (function () {
         var limit = Math.min(_config.limit - _notifications.displaying.length, _notifications.toBeDisplayed.length);
 
         _highestBottom = _config.offset + _notifications.displaying.length * 60;
-        var message = "";
 
         for (var i = 0; i < limit; i++) {
 
             var n = _notifications.toBeDisplayed[i];
-            message = "";
+            var message = "";
             
             if (n.type === "CUSTOM") {
-            	
-            	message = n.message;
-            	
+                
+                message = n.message;
+                
             } else {
-            	
-            	switch (n.category) {
-	                case "POINT":
-	                    message = "+" + parseInt(n.detail, 10) + " " + n.subject;
-	                    break;
-	                case "MISSION":
-	                    if (n.type === "ADD") {
-	                        message = "New Mission: " + n.subject;
-	                    } else if (n.type === "COMPLETE") {
-	                        message = "Completed: " + n.subject;
-	                    }
-	                    break;
-	                case "BADGE":
-	                    message += "Earned: " + n.subject;
-	                    break;
-	                default:
-	                    break;
-	
-	            }
-            	
+                
+                switch (n.category) {
+                case "POINT":
+                    message = "+" + parseInt(n.detail, 10) + " " + n.subject;
+                    break;
+                case "MISSION":
+                    if (n.type === "ADD") {
+                        message = "New Mission: " + n.subject;
+                    } else if (n.type === "COMPLETE") {
+                        message = "Completed: " + n.subject;
+                    }
+                    break;
+                case "BADGE":
+                    message += "Earned: " + n.subject;
+                    break;
+                default:
+                    break;
+    
+                }
+                
                 if (n.message) {
                     message += " (" + n.message + ")";
                 }
@@ -293,7 +292,7 @@ var GSNotifications = (function () {
                 message: message,
                 classList: _config.classList,
                 bottom: _highestBottom + i * 60,
-                iconSrc: _getIconUrl(n.category, n.icon),
+                iconSrc: _getIconUrl(n.category),
                 importance: (n.category !== "POINT") ? "high" : "low"
 
             });
@@ -337,11 +336,11 @@ var GSNotifications = (function () {
 
         if (n !== undefined && n.node !== undefined) {
 
-			n = _notifications.displaying.shift();
-			n.node.className = _config.classList;
-			_notifications.haveBeenDisplayed.unshift( n );
-			var notificationsEvent = new CustomEvent( "gs-notification-new" );
-			document.dispatchEvent( notificationsEvent );
+            n = _notifications.displaying.shift();
+            n.node.className = _config.classList;
+            _notifications.haveBeenDisplayed.unshift( n );
+            var notificationsEvent = new CustomEvent( "gs-notification-new" );
+            document.dispatchEvent( notificationsEvent );
 
             setTimeout(function () {
 
@@ -355,11 +354,9 @@ var GSNotifications = (function () {
     }
 
     function _calcNewBottoms() {
-
-        var style = "";
         for (var i = 0; i < _notifications.displaying.length; i++) {
 
-            style = (_notifications.displaying[i].node.importance === "high") ? _config.stylePrimary
+        	var style = (_notifications.displaying[i].node.importance === "high") ? _config.stylePrimary
                 : _config.styleSecondary;
             style += "; ";
             style += "bottom: " + (_config.offset + (i * 60)) + "px;";
@@ -415,7 +412,7 @@ var GSNotifications = (function () {
             xmlHttpRequest.open("POST", sUrl, true);
             // Set request header (optional if GET method is used)
             // xmlHttpRequest.setRequestHeader('Content-Type', 'application/json');
-            xmlHttpRequest.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            xmlHttpRequest.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
             // Callback when ReadyState is changed.
             xmlHttpRequest.onreadystatechange = function () {
@@ -535,7 +532,7 @@ var GSNotifications = (function () {
 
     function _getServerTime() {
 
-        var reqParams = '{"method":"getCurrentServerTime", "params":[]}';
+        var reqParams = "{\"method\":\"getCurrentServerTime\", \"params\":[]}";
         var request = JSON.parse(reqParams);
 
         _sendAPIRequest(request, function (data) {
@@ -564,7 +561,7 @@ var GSNotifications = (function () {
      */
     function _getNotifications() {
 
-		return _notifications.haveBeenDisplayed.slice();
+        return _notifications.haveBeenDisplayed.slice();
 
     }
 

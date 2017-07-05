@@ -30,8 +30,9 @@ sap.ui.controller("helpdesk.openTickets", {
             success: function(data) {
                 console.log("servlet response: " + data);
                 if (data && data.indexOf("exception") !== -1) {
-                    alert("There are conflicts in your rules. "+
-                        "Consider updating your Rule Engine in the GS Workbench. \n\n" + data.substring(data.indexOf("error") + 8));
+                    alert("There are conflicts in your rules. " 
+                    		+ "Consider updating your Rule Engine in the GS Workbench. \n\n"
+                    		+ data.substring(data.indexOf("error") + 8));
                 }
             },
             error: function (jqXHR, status, errorThrown) {
@@ -56,7 +57,7 @@ sap.ui.controller("helpdesk.openTickets", {
 
         // remove the sent ticket delayed to wait for css transitions
         setTimeout(function () {
-            for (var i = 0; data.open_tickets.length; i++) {
+            for (var i = 0; i < data.open_tickets.length; i++) {
                 if (ticketid === data.open_tickets[i].ticketid) {
                     data.open_tickets.splice(i, 1);
                     sap.ui.getCore().getModel().updateBindings();
@@ -72,7 +73,7 @@ sap.ui.controller("helpdesk.openTickets", {
 
         // show send notification
         // slowly fade out the sent ticket
-        for (var i = 0; data.open_tickets.length; i++) {
+        for (var i = 0; i < data.open_tickets.length; i++) {
             if (ticketid === data.open_tickets[i].ticketid) {
                 // fade out ticket
                 $("#ticketPanel_openTicketsLayout-" + i).addClass("fadeTicket");
@@ -92,15 +93,15 @@ sap.ui.controller("helpdesk.openTickets", {
     openTicketsTmpl: function(sId, oContext) {
         var controller = sap.ui.getCore().byId("openTicketsView").getController();
         var vLayout = new sap.ui.commons.layout.VerticalLayout("ticketPanel_" + sId, {
-                width: "100%"
-            })
+            width: "100%"
+        })
             .data("ticketid", oContext.getProperty("ticketid"))
             .addStyleClass("ticketPanel")
             .attachBrowserEvent("click", controller.ticketSelected);
 
         var ticket = new sap.ui.commons.Label({
-                text: "{issue}",
-            })
+            text: "{issue}",
+        })
             .addStyleClass("ticket-issue");
 
         var ticketDetails = new sap.ui.commons.layout.HorizontalLayout({

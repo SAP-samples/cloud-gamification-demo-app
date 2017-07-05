@@ -40,25 +40,25 @@ sap.ui.controller("helpdesk.notifications", {
         var message = "";
         switch(n.category) {
 
-            case "POINT" :
-            	if (n.type !== "CUSTOM"){
-            		message = "+" + parseInt(n.detail, 10) + " " + n.subject;
-            	} else {
-            		message = n.message;
-            	}
-            	break;
-            case "MISSION" :
-                if (n.type === "ADD") {
-                    message = "New Mission: " + n.subject;
-                } else if (n.type === "COMPLETE") {
-                    message = "Completed: " + n.subject;
-                }
-                break;
-            case "BADGE":
-                message += "Earned: " + n.subject;
-                break;
-            default :
-                break;
+        case "POINT" :
+            if (n.type !== "CUSTOM"){
+                message = "+" + parseInt(n.detail, 10) + " " + n.subject;
+            } else {
+                message = n.message;
+            }
+            break;
+        case "MISSION" :
+            if (n.type === "ADD") {
+                message = "New Mission: " + n.subject;
+            } else if (n.type === "COMPLETE") {
+                message = "Completed: " + n.subject;
+            }
+            break;
+        case "BADGE":
+            message += "Earned: " + n.subject;
+            break;
+        default :
+            break;
         }
 
         if (n.message) {
@@ -66,16 +66,16 @@ sap.ui.controller("helpdesk.notifications", {
         }
 
         var hLayout = new sap.ui.commons.layout.VerticalLayout({
-                width: "100%",
-                content: [
-                    new sap.ui.commons.Label({
-                        text: message
-                    }).addStyleClass("notification-message"),
-                    new sap.ui.commons.Label({
-                        text: new Date(n.dateCreated).toLocaleString()
-                    }).addStyleClass("notification-date"),
-                ]
-            })
+            width: "100%",
+            content: [
+                new sap.ui.commons.Label({
+                    text: message
+                }).addStyleClass("notification-message"),
+                new sap.ui.commons.Label({
+                    text: new Date(n.dateCreated).toLocaleString()
+                }).addStyleClass("notification-date"),
+            ]
+        })
             .addStyleClass("notification-panel");
         return hLayout;
     }
