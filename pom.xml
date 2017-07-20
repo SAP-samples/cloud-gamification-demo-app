@@ -6,19 +6,20 @@
 	<groupId>com.sap.gamification</groupId>
 	<artifactId>helpdesk</artifactId>
 	<packaging>war</packaging>
-	<version>1.37.0</version>
+	<version>1.38.0</version>
 
 	<properties>
-		<ldi.jacoco.skip/>
+		<ldi.jacoco.skip />
+		<sonar.javascript.eslint.reportPath>target/eslint/eslint.xml</sonar.javascript.eslint.reportPath>
 	</properties>
 	<dependencies>
 		<!-- The SAP Cloud Platform Java Web API -->
-        <dependency>
-            <groupId>com.sap.cloud</groupId>
-            <artifactId>neo-java-web-api</artifactId>
-            <version>1.86.27</version>
-            <scope>provided</scope>
-        </dependency>
+		<dependency>
+			<groupId>com.sap.cloud</groupId>
+			<artifactId>neo-java-web-api</artifactId>
+			<version>1.86.27</version>
+			<scope>provided</scope>
+		</dependency>
 		<!-- used to handle JSON transformation in servlets -->
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
@@ -28,9 +29,9 @@
 	</dependencies>
 
 	<build>
-		<!-- Controlling web context, e.g. to https://hostname/helpdesk instead
-			of https://hostname/helpdesk-0.8.0. We do not implement this via filename,
-			e.g. "helpdesk.war", with the <finalName> tag but define META-INF/MANIFEST.MF
+		<!-- Controlling web context, e.g. to https://hostname/helpdesk instead 
+			of https://hostname/helpdesk-0.8.0. We do not implement this via filename, 
+			e.g. "helpdesk.war", with the <finalName> tag but define META-INF/MANIFEST.MF 
 			-> Web-ContextPath: helpdesk instead. -->
 		<plugins>
 			<plugin>
@@ -46,17 +47,17 @@
 					</archive>
 				</configuration>
 			</plugin>
-			   
-	      <plugin>
-	        <groupId>org.apache.maven.plugins</groupId>
-	        <artifactId>maven-compiler-plugin</artifactId>
-	        <version>3.5.1</version>
-	        <configuration>
-	          <source>1.7</source>
-	          <target>1.7</target>
-	        </configuration>
-	      </plugin>
-    
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.5.1</version>
+				<configuration>
+					<source>1.7</source>
+					<target>1.7</target>
+				</configuration>
+			</plugin>
+
 			<plugin>
 				<artifactId>maven-checkstyle-plugin</artifactId>
 				<version>2.13</version>
@@ -74,4 +75,47 @@
 			</plugin>
 		</plugins>
 	</build>
+	<profiles>
+		<profile>
+			<id>eslint</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>com.sap.eslint</groupId>
+						<artifactId>eslint-maven-plugin</artifactId>
+						<version>0.1.16</version>
+						<executions>
+							<execution>
+								<id>static-code-check</id>
+								<goals>
+									<goal>eslint</goal>
+								</goals>
+								<phase>verify</phase>
+								<configuration>
+									<failOnError>false</failOnError>
+									<configFile>../.eslintrc.json</configFile>
+									<useEsLintRc>false</useEsLintRc>
+									<version>3.0.1</version>
+									<ignorePath>../.eslintignore</ignorePath>
+									<includes>
+										<include>src/main/webapp/**</include>
+									</includes>
+									<formatters>
+										<formatter
+											implementation="com.sap.eslint.java.formatters.JSLintSonarFormatter">
+											<outputFile>${sonar.javascript.eslint.reportPath}</outputFile>
+										</formatter>
+										<formatter
+											implementation="com.sap.eslint.java.formatters.CheckstyleFormatter">
+											<outputFile>target/eslint/checkstyle.xml</outputFile>
+										</formatter>
+									</formatters>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>
