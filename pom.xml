@@ -6,7 +6,7 @@
 	<groupId>com.sap.gamification</groupId>
 	<artifactId>helpdesk</artifactId>
 	<packaging>war</packaging>
-	<version>1.59.0</version>
+	<version>1.60.0</version>
 
 	<properties>
 		<ldi.jacoco.skip />
