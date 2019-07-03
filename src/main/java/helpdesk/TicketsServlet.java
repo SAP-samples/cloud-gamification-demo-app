@@ -83,7 +83,8 @@ public class TicketsServlet extends HttpServlet {
             new Date(), "");
       ticketMap.put(ticket.getTicketid(), ticket);
 
-      ticket = new Ticket(10058, "critical", "I need the password to my account. Please send it to me ASAP!!!", "Lisa", 123, new Date(), "");
+      ticket = new Ticket(10058, "critical", "I need the password to my account. Please send it to me ASAP!!!", "Lisa", 123, new Date(),
+            "");
       ticketMap.put(ticket.getTicketid(), ticket);
    }
 
@@ -226,16 +227,24 @@ public class TicketsServlet extends HttpServlet {
 
       String jsonRPCrequest = "{\"method\": \"getPlayer\", \"params\": [ \"" + playerId + "\" ]}";
 
-      String gamificationServiceResponse = requestGamificationService(jsonRPCrequest);
+      try {
+         String gamificationServiceResponse = requestGamificationService(jsonRPCrequest);
 
-      JsonParser parser = new JsonParser();
-      JsonObject result = (JsonObject) parser.parse(gamificationServiceResponse);
+         JsonParser parser = new JsonParser();
+         JsonObject result = (JsonObject) parser.parse(gamificationServiceResponse);
 
-      if (result.get("result").isJsonNull()) {
-         return false;
+         if (result.get("result").isJsonNull()) {
+            return false;
+         }
+         else {
+            return true;
+         }
       }
-      else {
-         return true;
+      catch (IllegalStateException e) {
+         if (e.getMessage().contains("not found")) {
+            return false;
+         }
+         throw e;
       }
    }
 
@@ -258,7 +267,7 @@ public class TicketsServlet extends HttpServlet {
       JsonParser parser = new JsonParser();
       JsonObject result = (JsonObject) parser.parse(gamificationServiceResponse);
 
-      if (result.get("result").toString().equals("true")) {
+      if (result.get("error").isJsonNull()) {
          return true;
       }
       else {
@@ -277,7 +286,8 @@ public class TicketsServlet extends HttpServlet {
     * @throws DestinationException
     * @throws NamingException
     */
-   private String initPlayerForHelpDesk(String playerId) throws ClientProtocolException, IOException, DestinationException, NamingException {
+   private String initPlayerForHelpDesk(String playerId)
+         throws ClientProtocolException, IOException, DestinationException, NamingException {
 
       // create json event string to initialize players
       String jsonRPCrequest = getEventStringFor(playerId, "initPlayerForApp", null);
@@ -303,8 +313,8 @@ public class TicketsServlet extends HttpServlet {
     * @throws ClientProtocolException
     * @throws IOException
     */
-   private String tellGamificationServiceAboutSolvedProblem(String playerId, String relevance) throws ClientProtocolException, IOException,
-         DestinationException, NamingException {
+   private String tellGamificationServiceAboutSolvedProblem(String playerId, String relevance)
+         throws ClientProtocolException, IOException, DestinationException, NamingException {
 
       // gamification event data
       String jsonRPCrequest = getEventStringFor(playerId, "solvedProblem", relevance);
@@ -351,8 +361,8 @@ public class TicketsServlet extends HttpServlet {
     * @throws IOException
     * @throws DestinationException
     */
-   private String requestGamificationService(String jsonString) throws ClientProtocolException, IOException, DestinationException,
-         NamingException {
+   private String requestGamificationService(String jsonString)
+         throws ClientProtocolException, IOException, DestinationException, NamingException {
 
       HttpClient httpClient = null;
       BufferedReader reader = null;
@@ -376,8 +386,8 @@ public class TicketsServlet extends HttpServlet {
          post.setEntity(new UrlEncodedFormEntity(urlParameters));
 
          // execute request, send POST to gamification service
-         logger.debug("Sending request to destination " + GAMIFICATION_SERVICE_DESTINATION + " (App: " + GAMIFICATION_SERVICE_APP
-               + ") --> " + jsonString);
+         logger.debug("Sending request to destination " + GAMIFICATION_SERVICE_DESTINATION + " (App: " + GAMIFICATION_SERVICE_APP + ") --> "
+               + jsonString);
          HttpResponse gamificationServiceResponse = httpClient.execute(post);
 
          // serialize gamification service response
