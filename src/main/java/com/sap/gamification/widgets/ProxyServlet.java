@@ -6,7 +6,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -24,13 +23,19 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.protocol.ClientContext;
+import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.BasicCookieStore;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
@@ -39,8 +44,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.gson.Gson;
-import com.sap.core.connectivity.api.DestinationException;
-import com.sap.core.connectivity.api.http.HttpDestination;
+import com.sap.core.connectivity.api.authentication.AuthenticationHeader;
+import com.sap.core.connectivity.api.authentication.AuthenticationHeaderProvider;
+import com.sap.core.connectivity.api.configuration.ConnectivityConfiguration;
+import com.sap.core.connectivity.api.configuration.DestinationConfiguration;
 
 /**
  * This servlet acts as a proxy to consume Gamification Service widgets. Depending on the deployment reported by VM
@@ -61,7 +68,7 @@ public class ProxyServlet extends HttpServlet {
    private static final String GAMIFICATION_SERVICE_WIDGET_DESTINATION = "gswidgetdest";
    private static final String GAMIFICATION_SERVICE_APPNAME = System.getProperty("gamification.demoapp.appname", "HelpDesk");
 
-   private  String lastCSRFToken;
+   private static String lastCSRFToken;
 
    /**
     * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
@@ -86,15 +93,19 @@ public class ProxyServlet extends HttpServlet {
       try {
          // Get HTTP destination
          Context ctx = new InitialContext();
-         HttpDestination destination = (HttpDestination) ctx.lookup("java:comp/env/" + GAMIFICATION_SERVICE_WIDGET_DESTINATION);
+         // look up the connectivity configuration API "connectivityConfiguration"
+         ConnectivityConfiguration configuration = (ConnectivityConfiguration) ctx.lookup("java:comp/env/connectivityConfiguration");
+
+         // get destination configuration for GAMIFICATION_SERVICE_WIDGET_DESTINATION
+         DestinationConfiguration destConfiguration = configuration.getConfiguration(GAMIFICATION_SERVICE_WIDGET_DESTINATION);
 
          try {
-            URL url = destination.getURI().toURL();
+            URL url = new URL(destConfiguration.getProperty("URL"));
             connectionInfo.setOrigin(url.getProtocol() + "://" + url.getAuthority());
             out.print(gson.toJson(connectionInfo));
             out.flush();
          }
-         catch (URISyntaxException e) {
+         catch (Exception e) {
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid service origin: " + e.getMessage());
          }
       }
@@ -145,11 +156,11 @@ public class ProxyServlet extends HttpServlet {
     * destination.
     * 
     * @param jsonString
-    *           gamification service event formatted as json string
+    * gamification service event formatted as json string
     * @param app
-    *           optional: provide name of app
+    * optional: provide name of app
     * @param response
-    *           original doPost HttpServletResponse for exception handling
+    * original doPost HttpServletResponse for exception handling
     * @return String serialized gamification service response msg
     * 
     * @throws ServletException
@@ -157,22 +168,28 @@ public class ProxyServlet extends HttpServlet {
     */
    private String callGamificationService(String jsonString, String app) throws ServletException, IOException {
 
-      HttpClient httpClient = null;
+      CloseableHttpClient httpClient = null;
 
       try {
 
          // Get HTTP destination
          Context ctx = new InitialContext();
 
-         // The default request to the Servlet will use
-         // outbound-internet-destination
-         HttpDestination destination = (HttpDestination) ctx.lookup("java:comp/env/" + GAMIFICATION_SERVICE_WIDGET_DESTINATION);
+         // look up the connectivity configuration API "connectivityConfiguration"
+         ConnectivityConfiguration configuration = (ConnectivityConfiguration) ctx.lookup("java:comp/env/connectivityConfiguration");
+
+         AuthenticationHeaderProvider authHeaderProvider = (AuthenticationHeaderProvider) ctx
+               .lookup("java:comp/env/authenticationHeaderProvider");
+
+         // get destination configuration for GAMIFICATION_SERVICE_WIDGET_DESTINATION
+         DestinationConfiguration destConfiguration = configuration.getConfiguration(GAMIFICATION_SERVICE_WIDGET_DESTINATION);
 
          // Create HTTP client
-         httpClient = destination.createHttpClient();
-         HttpPost post = new HttpPost();
+         httpClient = HttpClients.createDefault();
 
-         post.setHeader("X-CSRF-Token", lastCSRFToken);
+         String url = destConfiguration.getProperty("URL");
+         HttpPost post = new HttpPost(url);
+         post.addHeader("X-CSRF-Token", lastCSRFToken);
 
          // add JSON request and app name as url parameters
          List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
@@ -184,7 +201,29 @@ public class ProxyServlet extends HttpServlet {
          post.setEntity(new UrlEncodedFormEntity(urlParameters));
 
          // execute request, send POST to gamification service
-         HttpResponse gamificationServiceResponse = httpClient.execute(post);
+         HttpResponse gamificationServiceResponse = null;
+
+         String authType = destConfiguration.getProperty("Authentication");
+         switch (authType) {
+            case "AppToAppSSO":
+               // retrieve the authorization header for application-to-application SSO
+               AuthenticationHeader appToAppSSOHeader = authHeaderProvider.getAppToAppSSOHeader(url);
+               post.setHeader(appToAppSSOHeader.getName(), appToAppSSOHeader.getValue());
+               gamificationServiceResponse = httpClient.execute(post);
+               break;
+            case "BasicAuthentication":
+               // Create auth context
+               CredentialsProvider credProvider = new BasicCredentialsProvider();
+               credProvider.setCredentials(AuthScope.ANY,
+                     new UsernamePasswordCredentials(destConfiguration.getProperty("User"), destConfiguration.getProperty("Password")));
+               HttpClientContext context = HttpClientContext.create();
+               context.setCredentialsProvider(credProvider);
+               gamificationServiceResponse = httpClient.execute(post, context);
+               break;
+            default:
+               break;
+         }
+
          logger.debug("[Helpdesk TicketServlet] sending event to destination " + GAMIFICATION_SERVICE_WIDGET_DESTINATION + " (App: " + app
                + ") --> " + jsonString);
 
@@ -201,12 +240,18 @@ public class ProxyServlet extends HttpServlet {
                // get token
                // create http context with cookie store
                HttpContext httpContext = new BasicHttpContext();
-               httpContext.setAttribute(ClientContext.COOKIE_STORE, new BasicCookieStore());
+               httpContext.setAttribute(HttpClientContext.COOKIE_STORE, new BasicCookieStore());
 
                // get token
-               lastCSRFToken = fetchToken(httpClient, httpContext);
-               
+               lastCSRFToken = fetchToken(httpClient, httpContext, url);
+
                post.setHeader("X-CSRF-Token", lastCSRFToken);
+
+               if (authType.equals("AppToAppSSO")) {
+                  // retrieve the authorization header for application-to-application SSO
+                  AuthenticationHeader appToAppSSOHeader = authHeaderProvider.getAppToAppSSOHeader(url);
+                  post.setHeader(appToAppSSOHeader.getName(), appToAppSSOHeader.getValue());
+               }
 
                gamificationServiceResponse = httpClient.execute(post, httpContext);
                logger.debug("[Helpdesk TicketServlet] sending event to destination " + GAMIFICATION_SERVICE_WIDGET_DESTINATION + " (App: "
@@ -217,20 +262,21 @@ public class ProxyServlet extends HttpServlet {
 
                if (statusCode != HTTP_OK) {
                   String errorMessage = "Expected response status code is 200 but it is " + statusCode + " . Server Response: " + response;
+                  logger.error(errorMessage);
                   throw new ServletException(errorMessage);
                }
 
             }
             else {
-
                String errorMessage = "Expected response status code is 200 but it is " + statusCode + " . Server Response: " + response;
+               logger.error(errorMessage);
                throw new ServletException(errorMessage);
             }
          }
 
          return response;
       }
-      catch (NamingException | DestinationException e) {
+      catch (NamingException e) {
          String errorMessage = "Lookup of destination failed with reason: " + e.getMessage() + ". Hint: Make sure to have the destination "
                + GAMIFICATION_SERVICE_WIDGET_DESTINATION + " configured.";
          throw new ServletException(errorMessage, e);
@@ -239,7 +285,7 @@ public class ProxyServlet extends HttpServlet {
          // When HttpClient instance is no longer needed, shut down the
          // connection manager to ensure deallocation of all system resources
          if (httpClient != null) {
-            httpClient.getConnectionManager().shutdown();
+            httpClient.close();
          }
       }
 
@@ -283,8 +329,8 @@ public class ProxyServlet extends HttpServlet {
       return buffer.toString();
    }
 
-   private final String fetchToken(HttpClient httpClient, HttpContext httpContext) throws ClientProtocolException, IOException {
-      HttpGet request = new HttpGet();
+   private final String fetchToken(HttpClient httpClient, HttpContext httpContext, String url) throws ClientProtocolException, IOException {
+      HttpGet request = new HttpGet(url);
 
       request.setHeader("X-CSRF-Token", "Fetch");
 

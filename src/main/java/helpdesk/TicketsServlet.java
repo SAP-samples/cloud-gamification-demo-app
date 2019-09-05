@@ -26,10 +26,16 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
@@ -38,8 +44,8 @@ import org.slf4j.LoggerFactory;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.sap.core.connectivity.api.DestinationException;
-import com.sap.core.connectivity.api.http.HttpDestination;
+import com.sap.core.connectivity.api.configuration.ConnectivityConfiguration;
+import com.sap.core.connectivity.api.configuration.DestinationConfiguration;
 import com.sap.security.auth.login.LoginContextFactory;
 
 /**
@@ -55,7 +61,7 @@ public class TicketsServlet extends HttpServlet {
    private static final long serialVersionUID = 1L;
    protected static final Logger logger = LoggerFactory.getLogger(TicketsServlet.class);
 
-   private Map<Integer, Ticket> ticketMap;
+   private static Map<Integer, Ticket> ticketMap;
    // default appname = HelpDesk, when not set in VM args
    private static final String GAMIFICATION_SERVICE_APP = System.getProperty("gamification.demoapp.appname", "HelpDesk");
 
@@ -167,7 +173,7 @@ public class TicketsServlet extends HttpServlet {
 
          }
          catch (Exception e) {
-
+            logger.error("Failed to initial player.", e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write("Error while creating / initializing player: " + e.getMessage());
             return;
@@ -220,10 +226,9 @@ public class TicketsServlet extends HttpServlet {
     * @return
     * @throws ClientProtocolException
     * @throws IOException
-    * @throws DestinationException
     * @throws NamingException
     */
-   private boolean checkPlayerExists(String playerId) throws ClientProtocolException, IOException, DestinationException, NamingException {
+   private boolean checkPlayerExists(String playerId) throws ClientProtocolException, IOException, NamingException {
 
       String jsonRPCrequest = "{\"method\": \"getPlayer\", \"params\": [ \"" + playerId + "\" ]}";
 
@@ -244,6 +249,7 @@ public class TicketsServlet extends HttpServlet {
          if (e.getMessage().contains("not found")) {
             return false;
          }
+         logger.error("Failed to check user existence.", e);
          throw e;
       }
    }
@@ -255,10 +261,9 @@ public class TicketsServlet extends HttpServlet {
     * @return
     * @throws ClientProtocolException
     * @throws IOException
-    * @throws DestinationException
     * @throws NamingException
     */
-   private boolean createPlayer(String playerId) throws ClientProtocolException, IOException, DestinationException, NamingException {
+   private boolean createPlayer(String playerId) throws ClientProtocolException, IOException, NamingException {
 
       String jsonRPCrequest = "{\"method\":\"createPlayer\",\"params\":[\"" + playerId + "\"]}";
 
@@ -283,11 +288,9 @@ public class TicketsServlet extends HttpServlet {
     * @return
     * @throws ClientProtocolException
     * @throws IOException
-    * @throws DestinationException
     * @throws NamingException
     */
-   private String initPlayerForHelpDesk(String playerId)
-         throws ClientProtocolException, IOException, DestinationException, NamingException {
+   private String initPlayerForHelpDesk(String playerId) throws ClientProtocolException, IOException, NamingException {
 
       // create json event string to initialize players
       String jsonRPCrequest = getEventStringFor(playerId, "initPlayerForApp", null);
@@ -309,12 +312,11 @@ public class TicketsServlet extends HttpServlet {
     * ticket relevance, either <code>"critical"</code> or <code>""</code>
     * @return String containing the gamification service response
     * @throws NamingException
-    * @throws DestinationException
     * @throws ClientProtocolException
     * @throws IOException
     */
    private String tellGamificationServiceAboutSolvedProblem(String playerId, String relevance)
-         throws ClientProtocolException, IOException, DestinationException, NamingException {
+         throws ClientProtocolException, IOException, NamingException {
 
       // gamification event data
       String jsonRPCrequest = getEventStringFor(playerId, "solvedProblem", relevance);
@@ -359,28 +361,35 @@ public class TicketsServlet extends HttpServlet {
     * @throws ClientProtocolException
     * @throws NamingException
     * @throws IOException
-    * @throws DestinationException
     */
-   private String requestGamificationService(String jsonString)
-         throws ClientProtocolException, IOException, DestinationException, NamingException {
+   private String requestGamificationService(String jsonString) throws ClientProtocolException, IOException, NamingException {
 
-      HttpClient httpClient = null;
+      CloseableHttpClient httpClient = null;
       BufferedReader reader = null;
       HttpEntity httpEntity = null;
       try {
          Context ctx = new InitialContext();
 
-         // The default request to the Servlet will use
-         // outbound-internet-destination
-         HttpDestination destination = (HttpDestination) ctx.lookup("java:comp/env/" + GAMIFICATION_SERVICE_DESTINATION);
+         // look up the connectivity configuration API "connectivityConfiguration"
+         ConnectivityConfiguration configuration = (ConnectivityConfiguration) ctx.lookup("java:comp/env/connectivityConfiguration");
+
+         // get destination configuration for GAMIFICATION_SERVICE_WIDGET_DESTINATION
+         DestinationConfiguration destConfiguration = configuration.getConfiguration(GAMIFICATION_SERVICE_DESTINATION);
 
          // Create HTTP client
-         httpClient = destination.createHttpClient();
-         HttpPost post = new HttpPost();
+         httpClient = HttpClients.createDefault();
+
+         // Create auth context
+         CredentialsProvider credProvider = new BasicCredentialsProvider();
+         credProvider.setCredentials(AuthScope.ANY,
+               new UsernamePasswordCredentials(destConfiguration.getProperty("User"), destConfiguration.getProperty("Password")));
+         HttpClientContext context = HttpClientContext.create();
+         context.setCredentialsProvider(credProvider);
+
+         HttpPost post = new HttpPost(destConfiguration.getProperty("URL"));
 
          // add event data and app name as url parameters
-
-         List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
+         List<NameValuePair> urlParameters = new ArrayList<>();
          urlParameters.add(new BasicNameValuePair("json", jsonString));
          urlParameters.add(new BasicNameValuePair("app", GAMIFICATION_SERVICE_APP));
          post.setEntity(new UrlEncodedFormEntity(urlParameters));
@@ -388,7 +397,7 @@ public class TicketsServlet extends HttpServlet {
          // execute request, send POST to gamification service
          logger.debug("Sending request to destination " + GAMIFICATION_SERVICE_DESTINATION + " (App: " + GAMIFICATION_SERVICE_APP + ") --> "
                + jsonString);
-         HttpResponse gamificationServiceResponse = httpClient.execute(post);
+         HttpResponse gamificationServiceResponse = httpClient.execute(post, context);
 
          // serialize gamification service response
 
@@ -421,7 +430,7 @@ public class TicketsServlet extends HttpServlet {
          // connection manager to ensure immediate
          // deallocation of system resources
          if (httpClient != null) {
-            httpClient.getConnectionManager().shutdown();
+            httpClient.close();
          }
          if (null != httpEntity) {
             try {
