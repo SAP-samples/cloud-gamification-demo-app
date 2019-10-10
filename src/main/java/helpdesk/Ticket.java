@@ -3,13 +3,13 @@ package helpdesk;
 import java.util.Date;
 
 public class Ticket {
-   public int ticketid;
-   public String relevance;
-   public String issue;
-   public String customer_name;
-   public int customer_id;
-   public Date date;
-   public String response;
+   private int ticketid;
+   private String relevance;
+   private String issue;
+   private String customer_name;
+   private int customer_id;
+   private Date date;
+   private String response;
 
    public Ticket(int ticketid, String relevance, String issue, String customer_name, int customer_id, Date date, String response) {
       super();

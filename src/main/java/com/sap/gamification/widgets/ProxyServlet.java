@@ -9,6 +9,7 @@ import java.io.PrintWriter;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 import javax.naming.Context;
@@ -20,20 +21,17 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.NameValuePair;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.impl.client.BasicCookieStore;
-import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
@@ -192,7 +190,7 @@ public class ProxyServlet extends HttpServlet {
          post.addHeader("X-CSRF-Token", lastCSRFToken);
 
          // add JSON request and app name as url parameters
-         List<NameValuePair> urlParameters = new ArrayList<NameValuePair>();
+         List<NameValuePair> urlParameters = new ArrayList<>();
          urlParameters.add(new BasicNameValuePair("json", jsonString));
 
          if (app != null) {
@@ -209,21 +207,16 @@ public class ProxyServlet extends HttpServlet {
                // retrieve the authorization header for application-to-application SSO
                AuthenticationHeader appToAppSSOHeader = authHeaderProvider.getAppToAppSSOHeader(url);
                post.setHeader(appToAppSSOHeader.getName(), appToAppSSOHeader.getValue());
-               gamificationServiceResponse = httpClient.execute(post);
                break;
             case "BasicAuthentication":
-               // Create auth context
-               CredentialsProvider credProvider = new BasicCredentialsProvider();
-               credProvider.setCredentials(AuthScope.ANY,
-                     new UsernamePasswordCredentials(destConfiguration.getProperty("User"), destConfiguration.getProperty("Password")));
-               HttpClientContext context = HttpClientContext.create();
-               context.setCredentialsProvider(credProvider);
-               gamificationServiceResponse = httpClient.execute(post, context);
+               // only used for local
+               post.addHeader(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder().encodeToString(
+                     (destConfiguration.getProperty("User") + ":" + destConfiguration.getProperty("Password")).getBytes("UTF-8")));
                break;
             default:
                break;
          }
-
+         gamificationServiceResponse = httpClient.execute(post);
          logger.debug("[Helpdesk TicketServlet] sending event to destination " + GAMIFICATION_SERVICE_WIDGET_DESTINATION + " (App: " + app
                + ") --> " + jsonString);
 

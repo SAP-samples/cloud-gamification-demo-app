@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -24,6 +25,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.auth.AuthScope;
@@ -79,7 +81,7 @@ public class TicketsServlet extends HttpServlet {
       super();
       // example data containing 3 help desk tickets. one is marked as
       // critical.
-      ticketMap = new HashMap<Integer, Ticket>();
+      ticketMap = new HashMap<>();
 
       Ticket ticket = new Ticket(10056, "", "Hi! I just received my new computer and the button on the CD tray doesn't work properly.",
             "Jack", 183, new Date(), "");
@@ -185,13 +187,13 @@ public class TicketsServlet extends HttpServlet {
          // service
 
          Gson gson = new Gson();
-         // create a ticket object from the request
-         Ticket request_ticket = gson.fromJson(jb.toString(), Ticket.class);
-
-         // look up the relevance of the ticket
-         String relevance = ticketMap.get(request_ticket.getTicketid()).getRelevance();
 
          try {
+            // create a ticket object from the request
+            Ticket request_ticket = gson.fromJson(jb.toString(), Ticket.class);
+
+            // look up the relevance of the ticket
+            String relevance = ticketMap.get(request_ticket.getTicketid()).getRelevance();
 
             // notify the gamification service
             // productive code additionally would need some plausibility checks here, e.g. to prevent
@@ -387,6 +389,10 @@ public class TicketsServlet extends HttpServlet {
          context.setCredentialsProvider(credProvider);
 
          HttpPost post = new HttpPost(destConfiguration.getProperty("URL"));
+
+         // add for local usage
+         post.addHeader(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder().encodeToString(
+               (destConfiguration.getProperty("User") + ":" + destConfiguration.getProperty("Password")).getBytes("UTF-8")));
 
          // add event data and app name as url parameters
          List<NameValuePair> urlParameters = new ArrayList<>();
