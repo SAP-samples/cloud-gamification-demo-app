@@ -1,5 +1,4 @@
 .gs-notification {
-
 	position: absolute;
 	width: 350px;
 	margin-left: -175px;
@@ -16,21 +15,25 @@
 	line-height: 50px;
 	font-size: 14px;
 }
-.gs-notification-visible{
+
+.gs-notification-visible {
 	opacity: 1 !important;
 }
+
 .gs-notification-icon {
 	display: inline-block;
 	width: 15%;
 	height: 100%;
 	vertical-align: top;
 }
-.gs-notification-icon img{ 
+
+.gs-notification-icon img {
 	padding: 7px;
 	width: 37px;
 	height: 37px;
 }
-.gs-notification-content{
+
+.gs-notification-content {
 	display: inline-block;
 	width: 85%;
 	height: 100%;

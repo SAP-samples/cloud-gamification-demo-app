@@ -1,13 +1,10 @@
 /**
- * Notification Module - SAP Cloud Platform Gamification
- *
- * This module can be embedded into any given web application. Its main purpose
- * is polling of new notifications for a specific user from a given gamification
- * service instance. The module and its API will be globally available as
+ * Notification Module - SAP Cloud Platform Gamification<br>
+ * This module can be embedded into any given web application. Its main purpose is polling of new notifications for a
+ * specific user from a given gamification service instance. The module and its API will be globally available as
  * GSNotifications.
- *
  */
-var GSNotifications = (function () {
+var GSNotifications = (function() {
 
     // debug mode
     var _debug = false;
@@ -21,37 +18,36 @@ var GSNotifications = (function () {
 
     // default config, dont touch!
     var _defaultConfig = {
-        cssFile: "widgets/css/gs_notifications.css",
-        iconDefault: "widgets/images/NotificationOTHER.png",
-        defaultNotificationIcon: "Notification",
-        widgetProxyURL: "ProxyServlet/JsonRPC", // used to send request to gamification service without
-        // running into cross-origin problems
-        interval: 2000,
-        userName: "",
-        duration: 5000,
-        classList: "gs-notification",
-        defaultClass: "gs-notification",
-        limit: 3,
-        offset: 50, // initial distance from page bottom
-        showNotificationsYoungerThan: "",
-        showPoints: true,
-        stylePrimary: "background-color: #009de0",
-        styleSecondary: "background-color: #40BEF5",
-        appName: null,
-        groupPoints: true
+        cssFile : "widgets/css/gs_notifications.css",
+        iconDefault : "widgets/images/NotificationOTHER.png",
+        defaultNotificationIcon : "Notification",
+        widgetProxyURL : "ProxyServlet/JsonRPC", // used to send request to
+        // gamification service without running into cross-origin problems
+        interval : 2000,
+        userName : "",
+        duration : 5000,
+        classList : "gs-notification",
+        defaultClass : "gs-notification",
+        limit : 3,
+        offset : 50, // initial distance from page bottom
+        showNotificationsYoungerThan : "",
+        showPoints : true,
+        stylePrimary : "background-color: #009de0",
+        styleSecondary : "background-color: #40BEF5",
+        appName : null,
+        groupPoints : true
     };
 
     // notifications will always fade upwards from bottom
     var _highestBottom = _defaultConfig.offset;
 
-    // holds all notification data
-    // including all notifications that were already shown, that have to be displayed
-    // and the once that are currently displayed..
+    // holds all notification data including all notifications that were already shown, that have to be displayed and
+    // the once that are currently displayed..
     var _notifications = {
-        toBeDisplayed: [],
-        haveBeenDisplayed: [],
-        processedIds: [],
-        displaying: []
+        toBeDisplayed : [],
+        haveBeenDisplayed : [],
+        processedIds : [],
+        displaying : []
     };
 
     function _NotificationNode(options) {
@@ -76,16 +72,14 @@ var GSNotifications = (function () {
 
         }
 
-        _NotificationNode.prototype.getNode = function () {
+        _NotificationNode.prototype.getNode = function() {
 
             var node = document.createElement("div");
 
             node.innerHTML = "<div><img></div>" + "<div class=\"gs-notification-content\">DummyContent</div>";
-            // node.className = this.classList + " " + this.importance;
             node.className = this.classList;
             node.importance = this.importance;
-            node.style.backgroundColor = (this.importance === "high") ? _config.stylePrimary
-                : _config.styleSecondary;
+            node.style.backgroundColor = (this.importance === "high") ? _config.stylePrimary : _config.styleSecondary;
 
             node.targetBottom = options.bottom;
             node.id = "GSnotification_" + this.id;
@@ -141,9 +135,9 @@ var GSNotifications = (function () {
     function _poll() {
 
         var parameters = {
-            method: "getNotificationsForPlayer",
-            id: 1,
-            params: [_config.userName, _config.showNotificationsYoungerThan]
+            method : "getNotificationsForPlayer",
+            id : 1,
+            params : [ _config.userName, _config.showNotificationsYoungerThan ]
         };
 
         _polling = true;
@@ -180,13 +174,13 @@ var GSNotifications = (function () {
                         // check if there are already notifications to show
                         if (_notifications.toBeDisplayed.length > 0) {
 
-                            // check planned notifications for equal point types that could be used
-                            // for grouping with the current notification (notifications[i])
+                            // check planned notifications for equal point types that could be used for grouping with
+                            // the current notification (notifications[i])
                             for (var j = 0; j < _notifications.toBeDisplayed.length; j++) {
                                 // add the amount to the already existing notification
                                 if (newNotifications[i].category === "POINT"
-                                    && _notifications.toBeDisplayed[j].subject === newNotifications[i].subject
-                                    && _notifications.toBeDisplayed[j].message === newNotifications[i].message) {
+                                        && _notifications.toBeDisplayed[j].subject === newNotifications[i].subject
+                                        && _notifications.toBeDisplayed[j].message === newNotifications[i].message) {
                                     _notifications.toBeDisplayed[j].detail += newNotifications[i].detail;
                                     break;
                                 }
@@ -226,10 +220,10 @@ var GSNotifications = (function () {
         _polling = false;
     }
 
-    function _processPollResult (newNotifications) {
+    function _processPollResult(newNotifications) {
 
         // remove all notifications that have already been shown
-        newNotifications = newNotifications.filter(function (newNotification) {
+        newNotifications = newNotifications.filter(function(newNotification) {
             return _notifications.processedIds.indexOf(newNotification.id) === -1;
         });
 
@@ -241,7 +235,7 @@ var GSNotifications = (function () {
         }
 
         return newNotifications;
-        
+
     }
 
     function _prepareAndInjectNotifications() {
@@ -255,45 +249,45 @@ var GSNotifications = (function () {
 
             var n = _notifications.toBeDisplayed[i];
             var message = "";
-            
+
             if (n.type === "CUSTOM") {
-                
+
                 message = n.message;
-                
+
             } else {
-                
+
                 switch (n.category) {
-                case "POINT":
-                    message = "+" + parseInt(n.detail, 10) + " " + n.subject;
-                    break;
-                case "MISSION":
-                    if (n.type === "ADD") {
-                        message = "New Mission: " + n.subject;
-                    } else if (n.type === "COMPLETE") {
-                        message = "Completed: " + n.subject;
-                    }
-                    break;
-                case "BADGE":
-                    message += "Earned: " + n.subject;
-                    break;
-                default:
-                    break;
-    
+                    case "POINT":
+                        message = "+" + parseInt(n.detail, 10) + " " + n.subject;
+                        break;
+                    case "MISSION":
+                        if (n.type === "ADD") {
+                            message = "New Mission: " + n.subject;
+                        } else if (n.type === "COMPLETE") {
+                            message = "Completed: " + n.subject;
+                        }
+                        break;
+                    case "BADGE":
+                        message += "Earned: " + n.subject;
+                        break;
+                    default:
+                        break;
+
                 }
-                
+
                 if (n.message) {
                     message += " (" + n.message + ")";
                 }
             }
-            
+
             var notificationNode = new _NotificationNode({
 
-                id: n.id,
-                message: message,
-                classList: _config.classList,
-                bottom: _highestBottom + i * 60,
-                iconSrc: _getIconUrl(n.category),
-                importance: (n.category !== "POINT") ? "high" : "low"
+                id : n.id,
+                message : message,
+                classList : _config.classList,
+                bottom : _highestBottom + i * 60,
+                iconSrc : _getIconUrl(n.category),
+                importance : (n.category !== "POINT") ? "high" : "low"
 
             });
 
@@ -318,8 +312,7 @@ var GSNotifications = (function () {
             n = _notifications.toBeDisplayed.shift();
             n.node.className += " gs-notification-visible";
 
-            n.node.setAttribute("style", n.node.getAttribute("style") + "bottom: " + n.node.targetBottom
-                + "px;");
+            n.node.setAttribute("style", n.node.getAttribute("style") + "bottom: " + n.node.targetBottom + "px;");
             _notifications.displaying.push(n);
             _calcNewBottoms();
             setTimeout(_removeNotification, n.duration);
@@ -338,11 +331,11 @@ var GSNotifications = (function () {
 
             n = _notifications.displaying.shift();
             n.node.className = _config.classList;
-            _notifications.haveBeenDisplayed.unshift( n );
-            var notificationsEvent = new CustomEvent( "gs-notification-new" );
-            document.dispatchEvent( notificationsEvent );
+            _notifications.haveBeenDisplayed.unshift(n);
+            var notificationsEvent = new CustomEvent("gs-notification-new");
+            document.dispatchEvent(notificationsEvent);
 
-            setTimeout(function () {
+            setTimeout(function() {
 
                 body.removeChild(n.node);
                 _calcNewBottoms();
@@ -356,8 +349,8 @@ var GSNotifications = (function () {
     function _calcNewBottoms() {
         for (var i = 0; i < _notifications.displaying.length; i++) {
 
-        	var style = (_notifications.displaying[i].node.importance === "high") ? _config.stylePrimary
-                : _config.styleSecondary;
+            var style = (_notifications.displaying[i].node.importance === "high") ? _config.stylePrimary
+                    : _config.styleSecondary;
             style += "; ";
             style += "bottom: " + (_config.offset + (i * 60)) + "px;";
 
@@ -415,7 +408,7 @@ var GSNotifications = (function () {
             xmlHttpRequest.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
 
             // Callback when ReadyState is changed.
-            xmlHttpRequest.onreadystatechange = function () {
+            xmlHttpRequest.onreadystatechange = function() {
 
                 if (xmlHttpRequest.readyState === 4) {
 
@@ -460,8 +453,7 @@ var GSNotifications = (function () {
         if (typeof bState === "boolean") {
 
             _config.groupPoints = bState;
-            _log("[Gamification Service] Grouping point notifications is now "
-                + ((bState) ? "enabled." : "disabled."));
+            _log("[Gamification Service] Grouping point notifications is now " + ((bState) ? "enabled." : "disabled."));
 
         } else {
 
@@ -477,8 +469,7 @@ var GSNotifications = (function () {
 
         if (typeof sAppName === "string" && sAppName !== "") {
 
-            var oldApp = (_config.appName === undefined || _config.appName === null) ? "[DefaultApp]"
-                : _config.appName;
+            var oldApp = (_config.appName === undefined || _config.appName === null) ? "[DefaultApp]" : _config.appName;
 
             _config.appName = sAppName;
             _log("App context changed from: " + oldApp + " to " + sAppName);
@@ -486,7 +477,7 @@ var GSNotifications = (function () {
         } else {
 
             _log("Please provide a valid string. App context continues to be "
-            + (_config.appName === undefined || _config.appName === null) ? "default app" : _config.appName);
+                    + (_config.appName === undefined || _config.appName === null) ? "default app" : _config.appName);
 
         }
     }
@@ -500,7 +491,7 @@ var GSNotifications = (function () {
 
         if (typeof config === "object" && config.length === undefined) {
 
-            for (var attr in _defaultConfig) {
+            for ( var attr in _defaultConfig) {
 
                 if (config.hasOwnProperty(attr)) {
 
@@ -535,7 +526,7 @@ var GSNotifications = (function () {
         var reqParams = "{\"method\":\"getCurrentServerTime\", \"params\":[]}";
         var request = JSON.parse(reqParams);
 
-        _sendAPIRequest(request, function (data) {
+        _sendAPIRequest(request, function(data) {
 
             if (data.result !== null) {
                 _config.showNotificationsYoungerThan = data.result;
@@ -620,9 +611,8 @@ var GSNotifications = (function () {
     }
 
     /**
-     * true (default) lets the module show all notifications including the very basic ones like "user gained
-     * 1 point" false lets the module only display important notifications like "mission completed" or "badge
-     * earned"
+     * true (default) lets the module show all notifications including the very basic ones like "user gained 1 point"
+     * false lets the module only display important notifications like "mission completed" or "badge earned"
      */
     function _showPoints(bState) {
 
@@ -630,7 +620,7 @@ var GSNotifications = (function () {
 
             _config.showPoints = bState;
             _log("[Gamification Service] Notifications for earned points are now "
-                + ((bState) ? "enabled." : "disabled."));
+                    + ((bState) ? "enabled." : "disabled."));
 
         } else {
 
@@ -659,8 +649,7 @@ var GSNotifications = (function () {
     }
 
     /**
-     * expects an array filled with strings. all contained strings will be appended as style class for each
-     * notification
+     * expects an array filled with strings. all contained strings will be appended as style class for each notification
      */
     function _setStyleClasses(sClassList) {
 
@@ -692,22 +681,22 @@ var GSNotifications = (function () {
 
     return {
 
-        init: _init, // setup for first start
-        poll: _manualPoll, // manually poll, stops and restarts the poll interval
+        init : _init, // setup for first start
+        poll : _manualPoll, // manually poll, stops and restarts the poll interval
 
-        getConfig: _getConfig, // get current config
-        getNotifications: _getNotifications, // get data from all shown notifications
+        getConfig : _getConfig, // get current config
+        getNotifications : _getNotifications, // get data from all shown notifications
 
-        showPoints: _showPoints, // also display notifications from points (default:true)
-        setPollInterval: _setPollInterval, // set the polling interval (default: 7000ms)
-        setUserName: _setUserName, // define for which user the module is polling
-        setDebugMode: _setDebugMode, // switch debug mode on or off for more console output
-        setStyleClasses: _setStyleClasses, // list all styleclasses but dont forget to
-        setNotificationLimit: _setNotificationLimit,
-        restoreDefaultConfig: _setConfig,
-        setConfig: _setConfig,
-        setAppName: _setAppName, // multi app support
-        groupPoints: _groupPoints, // group similar notifications together
+        showPoints : _showPoints, // also display notifications from points (default:true)
+        setPollInterval : _setPollInterval, // set the polling interval (default: 7000ms)
+        setUserName : _setUserName, // define for which user the module is polling
+        setDebugMode : _setDebugMode, // switch debug mode on or off for more console output
+        setStyleClasses : _setStyleClasses, // list all styleclasses but dont forget to
+        setNotificationLimit : _setNotificationLimit,
+        restoreDefaultConfig : _setConfig,
+        setConfig : _setConfig,
+        setAppName : _setAppName, // multi app support
+        groupPoints : _groupPoints, // group similar notifications together
 
     };
 

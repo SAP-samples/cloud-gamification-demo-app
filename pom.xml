@@ -7,7 +7,7 @@
 	<groupId>com.sap.gamification</groupId>
 	<artifactId>helpdesk</artifactId>
 	<packaging>war</packaging>
-	<version>1.69.0</version>
+	<version>1.70.0</version>
 
 	<properties>
 		<ldi.jacoco.skip />
@@ -18,7 +18,7 @@
 		<dependency>
 			<groupId>com.sap.cloud</groupId>
 			<artifactId>neo-java-web-api</artifactId>
-			<version>3.95.2</version>
+			<version>3.103.14</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -30,7 +30,7 @@
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
-			<version>2.8.5</version>
+			<version>2.8.6</version>
 		</dependency>
 	</dependencies>
 	<dependencyManagement>

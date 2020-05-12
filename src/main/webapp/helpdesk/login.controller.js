@@ -1,6 +1,6 @@
 /**
- * welcome page controller. does no login, since logon is realized by the IP
- * however the welcome page uses a different header, which has to be be adjusted
+ * welcome page controller. does no login, since logon is realized by the IP however the welcome page uses a different
+ * header, which has to be be adjusted
  */
 sap.ui.controller("helpdesk.login", {
 
@@ -9,8 +9,7 @@ sap.ui.controller("helpdesk.login", {
         sap.ui.getCore().byId("menu-header").setVisible(true);
         sap.ui.getCore().byId("user-header").setVisible(true);
 
-		// initialize the player by sending an empty event. currently players
-		// are created implicitly with any event.
+        // initialize the player by sending an empty event. currently players are created implicitly with any event.
         $.ajax({
             type : "POST",
             url : "TicketsServlet",
