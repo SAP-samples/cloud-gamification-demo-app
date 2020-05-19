@@ -65,15 +65,13 @@ public class TicketsServlet extends HttpServlet {
     private static final String GAMIFICATION_SERVICE_APP = System.getProperty("gamification.demoapp.appname",
             "HelpDesk");
 
-    // This destination needs to be configured in your SAP Cloud Platform
-    // runtime.
+    // This destination needs to be configured in your SAP Cloud Platform runtime.
     // As you saw in the documentation, if you run this on your local SAP Cloud
-    // Platform configure the following
-    // destination (double click server > Connectivity > New Destination), name
-    // "gsdest", URL
-    // "http://localhost:8080/gamification/api/tech/JsonRPC", Authentication
-    // "BasicAuthentication", User and Password of
-    // a user with "AppAdmin" and "AppStandard" roles defined in the Users tab
+    // Platform configure the following destination (double click server >
+    // Connectivity > New Destination), name "gsdest", URL
+    // "http://localhost:8080/gamification/api/tech/JsonRPC",
+    // Authentication "BasicAuthentication", User and Password of a user with
+    // "AppAdmin" and "AppStandard" roles defined in the Users tab
     private static final String GAMIFICATION_SERVICE_DESTINATION = "gsdest";
 
     /**
@@ -151,42 +149,36 @@ public class TicketsServlet extends HttpServlet {
         // Create and prepare player.
         if (method.equals("initPlayer")) {
             try {
-                // Check if player already exists in the gamification service
-                // if not, create player and then trigger the init rule to
-                // automatically apply initial missions to the
-                // player
+                // Check if player already exists in the gamification service if not, create
+                // player and then trigger the init rule to automatically apply initial missions
+                // to the player
                 if (!this.checkPlayerExists(userId) && this.createPlayer(userId)) {
                     this.initPlayerForHelpDesk(userId);
                 }
 
             } catch (Exception e) {
-                logger.error("Failed to initial player.", e);
+                logger.debug("Failed to initial player.", e);
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 response.getWriter().write("Error while creating / initializing player: " + e.getMessage());
                 return;
             }
         } else {
-
-            // check the request data, pick up the related ticket, compare its
-            // relevance and send the event to the GS service
-
+            // check the request data, pick up the related ticket, compare its relevance and
+            // send the event to the GS service
             Gson gson = new Gson();
 
             try {
                 // create a ticket object from the request
                 Ticket requestTicket = gson.fromJson(method, Ticket.class);
-
                 // look up the relevance of the ticket
                 String relevance = ticketMap.get(requestTicket.getTicketid()).getRelevance();
-
-                // notify the gamification service productive code additionally
-                // would need some plausibility checks here, e.g. to prevent
-                // answering the same ticket thousands of times, causing DoS attacks
-                // etc.
+                // notify the gamification service productive code additionally would need some
+                // plausibility checks here, e.g. to prevent answering the same ticket thousands
+                // of times, causing DoS attacks etc.
                 gamificationServiceResponse = tellGamificationServiceAboutSolvedProblem(userId, relevance);
 
             } catch (Exception e) {
-                logger.debug(e.getMessage());
+                logger.debug("Error: ", e);
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 if (e.getMessage().contains(GAMIFICATION_SERVICE_APP)) {
                     // shorten the original message "App HelpDesk does not exist.
@@ -231,12 +223,12 @@ public class TicketsServlet extends HttpServlet {
             }
             return jb.toString();
         } catch (IOException e) {
-            logger.debug(e.getMessage());
+            logger.debug("Error: ", e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write("Error while serializing request");
             return null;
         } catch (IllegalArgumentException e) {
-            logger.debug(e.getMessage());
+            logger.debug("Error: ", e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write(e.getMessage());
             return null;
@@ -434,7 +426,7 @@ public class TicketsServlet extends HttpServlet {
                 try {
                     errorMessage = JsonParser.parseString(response).getAsJsonObject().get("error").getAsString();
                 } catch (Exception e) {
-                    logger.debug(e.getMessage());
+                    logger.debug("Error: ", e);
                     errorMessage = gamificationServiceResponse.getStatusLine().toString() + ": " + response;
                 }
                 throw new IllegalStateException(errorMessage);
@@ -449,14 +441,14 @@ public class TicketsServlet extends HttpServlet {
                 try {
                     EntityUtils.consume(httpEntity);
                 } catch (IOException e) {
-                    logger.debug("Failed to consume HttpEntity. {}" + e.getMessage());
+                    logger.debug("Failed to consume HttpEntity.", e);
                 }
             }
             if (reader != null) {
                 try {
                     reader.close();
                 } catch (IOException e) {
-                    logger.debug("Failed to release resources after exception. {}" + e.getMessage());
+                    logger.debug("Failed to release resources after exception.", e);
                 }
             }
         }

@@ -49,7 +49,7 @@ public class UserDataServlet extends HttpServlet {
             out.print(gson.toJson(userdataObject));
             out.flush();
         } catch (Exception e) {
-            logger.debug(e.getMessage());
+            logger.debug("Error: ", e);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "Error retrieving user data: " + e.getMessage());
         }
