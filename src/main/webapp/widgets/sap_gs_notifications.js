@@ -257,21 +257,21 @@ var GSNotifications = (function() {
             } else {
 
                 switch (n.category) {
-                    case "POINT":
-                        message = "+" + parseInt(n.detail, 10) + " " + n.subject;
-                        break;
-                    case "MISSION":
-                        if (n.type === "ADD") {
-                            message = "New Mission: " + n.subject;
-                        } else if (n.type === "COMPLETE") {
-                            message = "Completed: " + n.subject;
-                        }
-                        break;
-                    case "BADGE":
-                        message += "Earned: " + n.subject;
-                        break;
-                    default:
-                        break;
+                case "POINT":
+                    message = "+" + parseInt(n.detail, 10) + " " + n.subject;
+                    break;
+                case "MISSION":
+                    if (n.type === "ADD") {
+                        message = "New Mission: " + n.subject;
+                    } else if (n.type === "COMPLETE") {
+                        message = "Completed: " + n.subject;
+                    }
+                    break;
+                case "BADGE":
+                    message += "Earned: " + n.subject;
+                    break;
+                default:
+                    break;
 
                 }
 
@@ -350,7 +350,7 @@ var GSNotifications = (function() {
         for (var i = 0; i < _notifications.displaying.length; i++) {
 
             var style = (_notifications.displaying[i].node.importance === "high") ? _config.stylePrimary
-                    : _config.styleSecondary;
+                : _config.styleSecondary;
             style += "; ";
             style += "bottom: " + (_config.offset + (i * 60)) + "px;";
 

@@ -30,6 +30,7 @@ img:focus, button:focus, nav:focus, span:focus {
 
 #mainContainer {
 	width: 100%;
+	display: block;
 }
 
 body {
@@ -129,6 +130,10 @@ div#loginView {
 	margin-top: 5px;
 }
 
+div#loginPanel {
+	width: 300px;
+}
+
 /** open tickets page styles **/
 div#openTicketsView {
 	max-width: 1240px;
@@ -207,7 +212,7 @@ label.ticket-issue {
 
 .criticalTicket {
 	border-left: 10px solid rgb(254, 81, 81);
-	width: 97% !important;
+	width: 92.5% !important;
 }
 
 div.ticketDetails * {

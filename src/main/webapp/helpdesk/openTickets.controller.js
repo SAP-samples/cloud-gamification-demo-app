@@ -1,6 +1,6 @@
 sap.ui.controller("helpdesk.openTickets", {
 
-    onInit : function() {
+    onInit: function() {
         $(".ticketPanel").hover(function() {
             $(this).toggleClass("respondBtn-active");
         });
@@ -17,28 +17,27 @@ sap.ui.controller("helpdesk.openTickets", {
     /**
      * sending the response to the backend
      */
-    sendTicketResponse : function(ticketid, response) {
+    sendTicketResponse: function(ticketid, response) {
         var data = {
-            ticketid : ticketid,
-            response : response
+            ticketid: ticketid,
+            response: response
         };
         $.ajax({
-            type : "POST",
-            url : "TicketsServlet",
-            contentType : "application/json",
-            data : JSON.stringify(data),
-            success : function(data) {
+            type: "POST",
+            url: "TicketsServlet",
+            contentType: "application/json",
+            data: JSON.stringify(data),
+            success: function(data) {
                 console.log("servlet response: " + data);
                 if (data && data.indexOf("exception") !== -1) {
                     alert("There are conflicts in your rules. "
-                            + "Consider updating your Rule Engine in the GS Workbench. \n\n"
-                            + data.substring(data.indexOf("error") + 8));
+						+ "Consider updating your Rule Engine in the GS Workbench. \n\n"
+						+ data.substring(data.indexOf("error") + 8));
                 }
             },
-            error : function(jqXHR, status, errorThrown) {
+            error: function(jqXHR) {
                 console.error(jqXHR.responseText);
                 sap.ui.commons.MessageBox.alert(jqXHR.responseText, null, "Error during request");
-
             }
         });
     },
@@ -46,7 +45,7 @@ sap.ui.controller("helpdesk.openTickets", {
     /**
      * called when the response has been send
      */
-    onTicketSendBtnPress : function() {
+    onTicketSendBtnPress: function() {
         var model = sap.ui.getCore().getModel();
         var data = model.getData();
         var response = data.response_text;
@@ -90,30 +89,30 @@ sap.ui.controller("helpdesk.openTickets", {
         sap.ui.getCore().byId("responseBtn").setVisible(false);
 
     },
-    openTicketsTmpl : function(sId, oContext) {
+    openTicketsTmpl: function(sId, oContext) {
         var controller = sap.ui.getCore().byId("openTicketsView").getController();
         var vLayout = new sap.ui.commons.layout.VerticalLayout("ticketPanel_" + sId, {
-            width : "100%"
+            width: "95%"
         }).data("ticketid", oContext.getProperty("ticketid")).addStyleClass("ticketPanel").attachBrowserEvent("click",
-                controller.ticketSelected);
+            controller.ticketSelected);
 
         var ticket = new sap.ui.commons.Label({
-            text : "{issue}",
+            text: "{issue}",
         }).addStyleClass("ticket-issue");
 
         var ticketDetails = new sap.ui.commons.layout.HorizontalLayout({
-            content : [ new sap.ui.commons.Label({
-                text : "#" + oContext.getProperty("ticketid")
+            content: [new sap.ui.commons.Label({
+                text: "#" + oContext.getProperty("ticketid")
             }).addStyleClass("ticket-id"), new sap.ui.commons.Label({
-                text : "{customer_name}"
+                text: "{customerName}"
             }).addStyleClass("ticket-customer"), new sap.ui.commons.Label({
-                text : {
-                    path : "date",
-                    formatter : function(val) {
+                text: {
+                    path: "date",
+                    formatter: function(val) {
                         return val;
                     }
                 }
-            }).addStyleClass("ticket-date") ]
+            }).addStyleClass("ticket-date")]
         }).addStyleClass("ticketDetails");
 
         vLayout.addContent(ticket);
@@ -123,7 +122,7 @@ sap.ui.controller("helpdesk.openTickets", {
         return vLayout;
     },
     // called whenever the user selects a ticket
-    ticketSelected : function(oControlEvent) {
+    ticketSelected: function(oControlEvent) {
         var ticket = sap.ui.getCore().byId(oControlEvent.currentTarget.getAttribute("id"));
         var ticketid = ticket.data("ticketid");
         var modelData = sap.ui.getCore().getModel().getData();
@@ -141,7 +140,7 @@ sap.ui.controller("helpdesk.openTickets", {
         sap.ui.getCore().byId("responseHeader").setVisible(true);
         sap.ui.getCore().byId("responseInput").setVisible(true);
         sap.ui.getCore().byId("responseBtn").setVisible(true);
-        sap.ui.getCore().byId("responseInput").setValue("Dear " + modelData.active_ticket.customer_name + ",");
+        sap.ui.getCore().byId("responseInput").setValue("Dear " + modelData.active_ticket.customerName + ",");
 
     }
 });

@@ -1,21 +1,20 @@
 sap.ui.jsview("helpdesk.profile", {
 
-    getControllerName : function() {
+    getControllerName: function() {
         return "helpdesk.profile";
     },
 
-    createContent : function(oController) {
+    createContent: function() {
         var layout = new sap.ui.commons.layout.VerticalLayout("profileViewLayout", {
-            width : "100%"
+            width: "100%"
         });
         var rendered = false;
 
         this.iFrameUP = new sap.ui.core.HTML("iframeProfile", {
-            width : "100%",
-            content : ""
+            content: ""
         }).addDelegate({
 
-            onAfterRendering : function(e) {
+            onAfterRendering: function(e) {
                 var dataModelUser = sap.ui.getCore().getModel("userdata").getData();
                 var userid = dataModelUser.id;
 
@@ -30,8 +29,8 @@ sap.ui.jsview("helpdesk.profile", {
 
                 if (!rendered) {
                     e.srcControl.setContent("" + "<iframe src='" + origin + "/gamification/userprofile.html?name="
-                            + userid + "&app=" + app + "'" + " width='100%' height='100%' frameBorder='0'>"
-                            + "Alternate text if the iframe cannot be rendered" + "</iframe>");
+						+ userid + "&app=" + app + "'" + " width='100%' height='100%' frameBorder='0'>"
+						+ "Alternate text if the iframe cannot be rendered" + "</iframe>");
 
                     rendered = true;
                 }
