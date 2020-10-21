@@ -1,5 +1,7 @@
 # "HelpDesk" - A Demo Application for SAP Cloud Platform Gamification Service
 
+[![REUSE status](https://api.reuse.software/badge/github.com/SAP-samples/cloud-platform-gamification-demo-app)](https://api.reuse.software/info/github.com/SAP-samples/cloud-platform-gamification-demo-app)
+
 ## Description
 This code example includes a sample application named "HelpDesk" in order to demonstrate how to use the APIs of the SAP Cloud Platform Gamification Service. The application includes samples how to send events to the service and how to consume the achievements. Furthermore, examples include visual elements called "widgets" based on SAP UI5 how to visualize achievements like points, badges, and the leaderboard.
 
