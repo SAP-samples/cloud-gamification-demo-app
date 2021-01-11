@@ -7,7 +7,7 @@
     <groupId>com.sap.gamification</groupId>
     <artifactId>helpdesk</artifactId>
     <packaging>war</packaging>
-    <version>1.71.0</version>
+    <version>1.73.0</version>
 
     <properties>
         <ldi.jacoco.skip />
@@ -18,13 +18,13 @@
         <dependency>
             <groupId>com.sap.cloud</groupId>
             <artifactId>neo-java-web-api</artifactId>
-            <version>3.111.16</version>
+            <version>3.120.11</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.5.9</version>
+            <version>4.5.13</version>
         </dependency>
         <!-- used to handle JSON transformation in servlets -->
         <dependency>

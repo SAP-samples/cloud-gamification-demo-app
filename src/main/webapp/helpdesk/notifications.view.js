@@ -21,11 +21,9 @@ sap.ui.jsview("helpdesk.notifications", {
         });
         newLyt.bindAggregation("content", "/", oController.oNotificationsTmpl);
 
-        var vL = new sap.ui.commons.layout.VerticalLayout("notificationsVL", {
+        return new sap.ui.commons.layout.VerticalLayout("notificationsVL", {
             /*scrollable: true,*/
             content: [newLbl, newLyt]
         });
-
-        return vL;
     }
 });

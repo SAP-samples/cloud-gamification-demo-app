@@ -166,15 +166,15 @@ public class ProxyServlet extends HttpServlet {
      *                   optional: provide name of app
      * @param response
      *                   original doPost HttpServletResponse for exception handling
+     * 
      * @return String serialized gamification service response msg
+     * 
      * @throws ServletException
      * @throws IOException
      */
     private String callGamificationService(String jsonString, String app) throws ServletException, IOException {
 
-        CloseableHttpClient httpClient = null;
-
-        try {
+        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
 
             // Get HTTP destination
             Context ctx = new InitialContext();
@@ -191,9 +191,6 @@ public class ProxyServlet extends HttpServlet {
             // GAMIFICATION_SERVICE_WIDGET_DESTINATION
             DestinationConfiguration destConfiguration = configuration
                     .getConfiguration(GAMIFICATION_SERVICE_WIDGET_DESTINATION);
-
-            // Create HTTP client
-            httpClient = HttpClients.createDefault();
 
             String url = destConfiguration.getProperty("URL");
             HttpPost post = new HttpPost(url);
@@ -213,20 +210,23 @@ public class ProxyServlet extends HttpServlet {
 
             String authType = destConfiguration.getProperty("Authentication");
             switch (authType) {
-            case "AppToAppSSO":
-                // retrieve the authorization header for application-to-application
-                // SSO
-                AuthenticationHeader appToAppSSOHeader = authHeaderProvider.getAppToAppSSOHeader(url);
-                post.setHeader(appToAppSSOHeader.getName(), appToAppSSOHeader.getValue());
-                break;
-            case "BasicAuthentication":
-                // only used for local
-                post.addHeader(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder().encodeToString(
-                        (destConfiguration.getProperty("User") + ":" + destConfiguration.getProperty("Password"))
-                                .getBytes(StandardCharsets.UTF_8.name())));
-                break;
-            default:
-                break;
+                case "AppToAppSSO":
+                    // retrieve the authorization header for application-to-application SSO
+                    AuthenticationHeader appToAppSSOHeader = authHeaderProvider.getAppToAppSSOHeader(url);
+                    post.addHeader(appToAppSSOHeader.getName(), appToAppSSOHeader.getValue());
+                    break;
+                case "BasicAuthentication":
+                    // only used for local
+                    if (url.contains("localhost")) {
+                        post.addHeader(HttpHeaders.AUTHORIZATION,
+                                "Basic " + Base64.getEncoder()
+                                        .encodeToString((destConfiguration.getProperty("User") + ":"
+                                                + destConfiguration.getProperty("Password"))
+                                                        .getBytes(StandardCharsets.UTF_8)));
+                    }
+                    break;
+                default:
+                    break;
             }
             gamificationServiceResponse = httpClient.execute(post);
             logger.debug("[Helpdesk TicketServlet] sending event to destination {} (App: {}) --> {}",
@@ -288,12 +288,6 @@ public class ProxyServlet extends HttpServlet {
                     + ". Hint: Make sure to have the destination " + GAMIFICATION_SERVICE_WIDGET_DESTINATION
                     + " configured.";
             throw new ServletException(errorMessage, e);
-        } finally {
-            // When HttpClient instance is no longer needed, shut down the
-            // connection manager to ensure deallocation of all system resources
-            if (httpClient != null) {
-                httpClient.close();
-            }
         }
 
     }

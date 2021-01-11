@@ -6,9 +6,7 @@ sap.ui.jsview("helpdesk.helpDesk", {
 
     createContent: function() {
 
-        var container = new sap.ui.commons.layout.VerticalLayout("mainContainer");
+        return new sap.ui.commons.layout.VerticalLayout("mainContainer");
         // see onInit() method in controller
-
-        return container;
     },
 });

@@ -239,7 +239,9 @@ public class TicketsServlet extends HttpServlet {
      * Check if player exists in gamification service
      * 
      * @param playerId
+     * 
      * @return
+     * 
      * @throws IOException
      * @throws NamingException
      */
@@ -265,7 +267,9 @@ public class TicketsServlet extends HttpServlet {
      * Create a new player with given id
      * 
      * @param playerId
+     * 
      * @return
+     * 
      * @throws IOException
      * @throws NamingException
      */
@@ -286,7 +290,9 @@ public class TicketsServlet extends HttpServlet {
      * 
      * @param playerId
      *                 gamification service player id
+     * 
      * @return
+     * 
      * @throws IOException
      * @throws NamingException
      */
@@ -312,7 +318,9 @@ public class TicketsServlet extends HttpServlet {
      * @param relevance
      *                  ticket relevance, either <code>"critical"</code> or
      *                  <code>""</code>
+     * 
      * @return String containing the gamification service response
+     * 
      * @throws NamingException
      * @throws IOException
      */
@@ -338,6 +346,7 @@ public class TicketsServlet extends HttpServlet {
      * @param playerId
      * @param eventName
      * @param relevance
+     * 
      * @return
      */
     private String getEventStringFor(String playerId, String eventName, String relevance) {
@@ -359,7 +368,9 @@ public class TicketsServlet extends HttpServlet {
      *                   gamification service event formatted as JSON string
      * @param response
      *                   original doPost HttpServletResponse for exception handling
+     * 
      * @return String serialized gamification service response msg
+     * 
      * @throws NamingException
      * @throws IOException
      */
@@ -370,17 +381,13 @@ public class TicketsServlet extends HttpServlet {
         try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
             Context ctx = new InitialContext();
 
-            // look up the connectivity configuration API
-            // "connectivityConfiguration"
+            // look up the connectivity configuration API "connectivityConfiguration"
             ConnectivityConfiguration configuration = (ConnectivityConfiguration) ctx
                     .lookup("java:comp/env/connectivityConfiguration");
 
-            // get destination configuration for
-            // GAMIFICATION_SERVICE_WIDGET_DESTINATION
+            // get destination configuration for GAMIFICATION_SERVICE_WIDGET_DESTINATION
             DestinationConfiguration destConfiguration = configuration
                     .getConfiguration(GAMIFICATION_SERVICE_DESTINATION);
-
-            // Create HTTP client
 
             // Create auth context
             CredentialsProvider credProvider = new BasicCredentialsProvider();
@@ -392,10 +399,11 @@ public class TicketsServlet extends HttpServlet {
             HttpPost post = new HttpPost(destConfiguration.getProperty("URL"));
 
             // add for local usage
-            post.addHeader(HttpHeaders.AUTHORIZATION,
-                    "Basic " + Base64.getEncoder().encodeToString(
-                            (destConfiguration.getProperty("User") + ":" + destConfiguration.getProperty("Password"))
-                                    .getBytes(StandardCharsets.UTF_8.name())));
+            if (destConfiguration.getProperty("URL").contains("localhost")) {
+                post.addHeader(HttpHeaders.AUTHORIZATION, "Basic " + Base64.getEncoder().encodeToString(
+                        (destConfiguration.getProperty("User") + ":" + destConfiguration.getProperty("Password"))
+                                .getBytes(StandardCharsets.UTF_8.name())));
+            }
 
             // add event data and app name as url parameters
             List<NameValuePair> urlParameters = new ArrayList<>();
@@ -434,9 +442,8 @@ public class TicketsServlet extends HttpServlet {
 
             return response;
         } finally {
-            // When HttpClient instance is no longer needed, shut down the
-            // connection manager to ensure immediate deallocation of system
-            // resources
+            // When HttpClient instance is no longer needed, shut down the connection manager to ensure immediate
+            // deallocation of system resources
             if (null != httpEntity) {
                 try {
                     EntityUtils.consume(httpEntity);

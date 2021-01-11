@@ -59,7 +59,7 @@ sap.ui.controller("helpdesk.notifications", {
             message += " (" + n.message + ")";
         }
 
-        var hLayout = new sap.ui.commons.layout.VerticalLayout({
+        return new sap.ui.commons.layout.VerticalLayout({
             width: "100%",
             content: [new sap.ui.commons.Label({
                 text: message
@@ -67,7 +67,6 @@ sap.ui.controller("helpdesk.notifications", {
                 text: new Date(n.dateCreated).toLocaleString()
             }).addStyleClass("notification-date"),]
         }).addStyleClass("notification-panel");
-        return hLayout;
     }
 
 });
