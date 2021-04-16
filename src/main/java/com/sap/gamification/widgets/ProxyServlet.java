@@ -94,13 +94,11 @@ public class ProxyServlet extends HttpServlet {
         try {
             // Get HTTP destination
             Context ctx = new InitialContext();
-            // look up the connectivity configuration API
-            // "connectivityConfiguration"
+            // look up the connectivity configuration API "connectivityConfiguration"
             ConnectivityConfiguration configuration = (ConnectivityConfiguration) ctx
                     .lookup("java:comp/env/connectivityConfiguration");
 
-            // get destination configuration for
-            // GAMIFICATION_SERVICE_WIDGET_DESTINATION
+            // get destination configuration for GAMIFICATION_SERVICE_WIDGET_DESTINATION
             DestinationConfiguration destConfiguration = configuration
                     .getConfiguration(GAMIFICATION_SERVICE_WIDGET_DESTINATION);
 
@@ -179,16 +177,14 @@ public class ProxyServlet extends HttpServlet {
             // Get HTTP destination
             Context ctx = new InitialContext();
 
-            // look up the connectivity configuration API
-            // "connectivityConfiguration"
+            // look up the connectivity configuration API "connectivityConfiguration"
             ConnectivityConfiguration configuration = (ConnectivityConfiguration) ctx
                     .lookup("java:comp/env/connectivityConfiguration");
 
             AuthenticationHeaderProvider authHeaderProvider = (AuthenticationHeaderProvider) ctx
                     .lookup("java:comp/env/authenticationHeaderProvider");
 
-            // get destination configuration for
-            // GAMIFICATION_SERVICE_WIDGET_DESTINATION
+            // get destination configuration for GAMIFICATION_SERVICE_WIDGET_DESTINATION
             DestinationConfiguration destConfiguration = configuration
                     .getConfiguration(GAMIFICATION_SERVICE_WIDGET_DESTINATION);
 
