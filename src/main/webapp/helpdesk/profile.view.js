@@ -1,10 +1,10 @@
 sap.ui.jsview("helpdesk.profile", {
 
-    getControllerName: function() {
+    getControllerName: function () {
         return "helpdesk.profile";
     },
 
-    createContent: function() {
+    createContent: function () {
         var layout = new sap.ui.commons.layout.VerticalLayout("profileViewLayout", {
             width: "100%"
         });
@@ -14,9 +14,9 @@ sap.ui.jsview("helpdesk.profile", {
             content: ""
         }).addDelegate({
 
-            onAfterRendering: function(e) {
+            onAfterRendering: function (e) {
                 var dataModelUser = sap.ui.getCore().getModel("userdata").getData();
-                var userid = dataModelUser.id;
+                var userId = dataModelUser.id;
 
                 var dataModelService = sap.ui.getCore().getModel("servicedata").getData();
                 var origin = dataModelService.origin;
@@ -28,14 +28,13 @@ sap.ui.jsview("helpdesk.profile", {
                 }
 
                 if (!rendered) {
-                    e.srcControl.setContent("" + "<iframe src='" + origin + "/gamification/userprofile.html?name="
-						+ userid + "&app=" + app + "'" + " width='100%' height='100%' frameBorder='0'>"
-						+ "Alternate text if the iframe cannot be rendered" + "</iframe>");
+                    e.srcControl.setContent(`<iframe src='${origin}/gamification/userprofile.html?name=${userId}&app=${app}'`
+                        + " width='100%' height='100%' frameBorder='0'>Alternate text if the iframe cannot be rendered</iframe>");
 
                     rendered = true;
                 }
 
-                // whenever the app navigates to the profile view, recalc its height
+                // whenever the app navigates to the profile view, recalculate its height
                 var headerHeight = $("#mainContainer>div:first-child").height();
                 var profileHeight = $(document).height() - headerHeight;
                 $("div#profileViewLayout > div:first-child").height(profileHeight);

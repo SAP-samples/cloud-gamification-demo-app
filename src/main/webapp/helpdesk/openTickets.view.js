@@ -5,11 +5,11 @@
  */
 sap.ui.jsview("helpdesk.openTickets", {
 
-    getControllerName: function() {
+    getControllerName: function () {
         return "helpdesk.openTickets";
     },
 
-    createContent: function(controller) {
+    createContent: function (controller) {
 
         var oOpenTickets = new sap.ui.commons.layout.VerticalLayout("openTicketsLayout", {
             width: "100%"
@@ -26,14 +26,14 @@ sap.ui.jsview("helpdesk.openTickets", {
             content: [new sap.ui.commons.Label("currentTicketId", {
                 text: {
                     path: "/active_ticket/ticketid",
-                    formatter: function(val) {
-                        return "#" + val;
+                    formatter: function (val) {
+                        return `#${val}`;
                     }
                 }
             }), new sap.ui.commons.Label("currentTicketRelevance", {
                 text: {
                     path: "/active_ticket/relevance",
-                    formatter: function(val) {
+                    formatter: function (val) {
                         return (val === "critical") ? val : "";
                     }
                 }
@@ -49,8 +49,8 @@ sap.ui.jsview("helpdesk.openTickets", {
             content: [new sap.ui.commons.Label("current-ticket-customer-name", {
                 text: {
                     path: "/active_ticket/customerName",
-                    formatter: function(value) {
-                        return "From " + value;
+                    formatter: function (value) {
+                        return `From ${value}`;
                     }
                 }
             }), new sap.ui.commons.Label("current-ticket-date", {

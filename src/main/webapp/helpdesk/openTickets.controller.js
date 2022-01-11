@@ -1,14 +1,14 @@
 sap.ui.controller("helpdesk.openTickets", {
 
-    onInit: function() {
-        $(".ticketPanel").hover(function() {
+    onInit: function () {
+        $(".ticketPanel").hover(function () {
             $(this).toggleClass("respondBtn-active");
         });
 
-        $(".ticketPanel").hover(function() {
+        $(".ticketPanel").hover(function () {
             $(this).toggleClass("ticket-hover");
         });
-        $(".ticketPanel").click(function() {
+        $(".ticketPanel").click(function () {
             $(".ticketPanel").removeClass("ticket-active");
             $(this).toggleClass("ticket-active");
         });
@@ -17,7 +17,7 @@ sap.ui.controller("helpdesk.openTickets", {
     /**
      * sending the response to the backend
      */
-    sendTicketResponse: function(ticketid, response) {
+    sendTicketResponse: function (ticketid, response) {
         var data = {
             ticketid: ticketid,
             response: response
@@ -27,15 +27,13 @@ sap.ui.controller("helpdesk.openTickets", {
             url: "TicketsServlet",
             contentType: "application/json",
             data: JSON.stringify(data),
-            success: function(data) {
-                console.log("servlet response: " + data);
-                if (data && data.indexOf("exception") !== -1) {
-                    alert("There are conflicts in your rules. "
-						+ "Consider updating your Rule Engine in the GS Workbench. \n\n"
-						+ data.substring(data.indexOf("error") + 8));
+            success: function (resp) {
+                console.log(`servlet response: ${resp}`);
+                if (resp && resp.indexOf("exception") !== -1) {
+                    alert(`There are conflicts in your rules. Consider updating your Rule Engine in the GS Workbench. \n\n${resp.substring(resp.indexOf("error") + 8)}`);
                 }
             },
-            error: function(jqXHR) {
+            error: function (jqXHR) {
                 console.error(jqXHR.responseText);
                 sap.ui.commons.MessageBox.alert(jqXHR.responseText, null, "Error during request");
             }
@@ -45,7 +43,7 @@ sap.ui.controller("helpdesk.openTickets", {
     /**
      * called when the response has been send
      */
-    onTicketSendBtnPress: function() {
+    onTicketSendBtnPress: function () {
         var model = sap.ui.getCore().getModel();
         var data = model.getData();
         var response = data.response_text;
@@ -55,7 +53,7 @@ sap.ui.controller("helpdesk.openTickets", {
         this.sendTicketResponse(ticketid, response);
 
         // remove the sent ticket delayed to wait for css transitions
-        setTimeout(function() {
+        setTimeout(function () {
             for (var i = 0; i < data.open_tickets.length; i++) {
                 if (ticketid === data.open_tickets[i].ticketid) {
                     data.open_tickets.splice(i, 1);
@@ -75,7 +73,7 @@ sap.ui.controller("helpdesk.openTickets", {
         for (var i = 0; i < data.open_tickets.length; i++) {
             if (ticketid === data.open_tickets[i].ticketid) {
                 // fade out ticket
-                $("#ticketPanel_openTicketsLayout-" + i).addClass("fadeTicket");
+                $(`#ticketPanel_openTicketsLayout-${i}`).addClass("fadeTicket");
                 break;
             }
         }
@@ -89,12 +87,12 @@ sap.ui.controller("helpdesk.openTickets", {
         sap.ui.getCore().byId("responseBtn").setVisible(false);
 
     },
-    openTicketsTmpl: function(sId, oContext) {
+    openTicketsTmpl: function (sId, oContext) {
         var controller = sap.ui.getCore().byId("openTicketsView").getController();
-        var vLayout = new sap.ui.commons.layout.VerticalLayout("ticketPanel_" + sId, {
+        var vLayout = new sap.ui.commons.layout.VerticalLayout(`ticketPanel_${sId}`, {
             width: "95%"
-        }).data("ticketid", oContext.getProperty("ticketid")).addStyleClass("ticketPanel").attachBrowserEvent("click",
-            controller.ticketSelected);
+        }).data("ticketid", oContext.getProperty("ticketid")).addStyleClass("ticketPanel")
+            .attachBrowserEvent("click", controller.ticketSelected);
 
         var ticket = new sap.ui.commons.Label({
             text: "{issue}",
@@ -102,13 +100,13 @@ sap.ui.controller("helpdesk.openTickets", {
 
         var ticketDetails = new sap.ui.commons.layout.HorizontalLayout({
             content: [new sap.ui.commons.Label({
-                text: "#" + oContext.getProperty("ticketid")
+                text: `#${oContext.getProperty("ticketid")}`
             }).addStyleClass("ticket-id"), new sap.ui.commons.Label({
                 text: "{customerName}"
             }).addStyleClass("ticket-customer"), new sap.ui.commons.Label({
                 text: {
                     path: "date",
-                    formatter: function(val) {
+                    formatter: function (val) {
                         return val;
                     }
                 }
@@ -118,11 +116,13 @@ sap.ui.controller("helpdesk.openTickets", {
         vLayout.addContent(ticket);
         vLayout.addContent(ticketDetails);
 
-        if (oContext.getProperty("relevance") === "critical") vLayout.addStyleClass("criticalTicket");
+        if (oContext.getProperty("relevance") === "critical") {
+            vLayout.addStyleClass("criticalTicket");
+        }
         return vLayout;
     },
     // called whenever the user selects a ticket
-    ticketSelected: function(oControlEvent) {
+    ticketSelected: function (oControlEvent) {
         var ticket = sap.ui.getCore().byId(oControlEvent.currentTarget.getAttribute("id"));
         var ticketid = ticket.data("ticketid");
         var modelData = sap.ui.getCore().getModel().getData();
@@ -140,7 +140,7 @@ sap.ui.controller("helpdesk.openTickets", {
         sap.ui.getCore().byId("responseHeader").setVisible(true);
         sap.ui.getCore().byId("responseInput").setVisible(true);
         sap.ui.getCore().byId("responseBtn").setVisible(true);
-        sap.ui.getCore().byId("responseInput").setValue("Dear " + modelData.active_ticket.customerName + ",");
+        sap.ui.getCore().byId("responseInput").setValue(`Dear ${modelData.active_ticket.customerName},`);
 
     }
 });
