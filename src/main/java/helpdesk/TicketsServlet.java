@@ -58,7 +58,7 @@ import com.sap.security.auth.login.LoginContextFactory;
  */
 public class TicketsServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
-    protected static final Logger logger = LoggerFactory.getLogger(TicketsServlet.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(TicketsServlet.class);
 
     private static Map<Integer, Ticket> ticketMap = new HashMap<>();
     // default appname = HelpDesk, when not set in VM args
@@ -157,7 +157,7 @@ public class TicketsServlet extends HttpServlet {
                 }
 
             } catch (Exception e) {
-                logger.debug("Failed to initial player.", e);
+                LOGGER.debug("Failed to initial player.", e);
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 response.getWriter().write("Error while creating / initializing player: " + e.getMessage());
                 return;
@@ -178,7 +178,7 @@ public class TicketsServlet extends HttpServlet {
                 gamificationServiceResponse = tellGamificationServiceAboutSolvedProblem(userId, relevance);
 
             } catch (Exception e) {
-                logger.debug("Error: ", e);
+                LOGGER.debug("Error: ", e);
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 if (e.getMessage().contains(GAMIFICATION_SERVICE_APP)) {
                     // shorten the original message "App HelpDesk does not exist.
@@ -204,7 +204,7 @@ public class TicketsServlet extends HttpServlet {
             loginContext.login();
             return request.getRemoteUser();
         } catch (LoginException e) {
-            logger.debug("Login failed.", e);
+            LOGGER.debug("Login failed.", e);
             return null;
         }
     }
@@ -223,12 +223,12 @@ public class TicketsServlet extends HttpServlet {
             }
             return jb.toString();
         } catch (IOException e) {
-            logger.debug("Error: ", e);
+            LOGGER.debug("Error: ", e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write("Error while serializing request");
             return null;
         } catch (IllegalArgumentException e) {
-            logger.debug("Error: ", e);
+            LOGGER.debug("Error: ", e);
             response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             response.getWriter().write(e.getMessage());
             return null;
@@ -237,11 +237,11 @@ public class TicketsServlet extends HttpServlet {
 
     /**
      * Check if player exists in gamification service
-     * 
+     *
      * @param playerId
-     * 
+     *
      * @return
-     * 
+     *
      * @throws IOException
      * @throws NamingException
      */
@@ -265,11 +265,11 @@ public class TicketsServlet extends HttpServlet {
 
     /**
      * Create a new player with given id
-     * 
+     *
      * @param playerId
-     * 
+     *
      * @return
-     * 
+     *
      * @throws IOException
      * @throws NamingException
      */
@@ -287,12 +287,11 @@ public class TicketsServlet extends HttpServlet {
     /**
      * at the moment players are initiated implicitly, as soon as there are
      * events sent for their playerID
-     * 
-     * @param playerId
-     *                 gamification service player id
-     * 
+     *
+     * @param playerId gamification service player id
+     *
      * @return
-     * 
+     *
      * @throws IOException
      * @throws NamingException
      */
@@ -304,23 +303,20 @@ public class TicketsServlet extends HttpServlet {
         String gamificationServiceResponse = requestGamificationService(jsonRPCrequest);
 
         // create a request response that contains the original request and
-        // forwards the response from the gamification
-        // service
+        // forwards the response from the gamification service
         return "{ \"event\": \"" + jsonRPCrequest + "&app=" + GAMIFICATION_SERVICE_APP + "\", \"response\":"
                 + gamificationServiceResponse + "}";
     }
 
     /**
      * Tells the gamification service that a user has solved a problem
-     * 
-     * @param playerId
-     *                  gamification service player id
-     * @param relevance
-     *                  ticket relevance, either <code>"critical"</code> or
+     *
+     * @param playerId  gamification service player id
+     * @param relevance ticket relevance, either <code>"critical"</code> or
      *                  <code>""</code>
-     * 
+     *
      * @return String containing the gamification service response
-     * 
+     *
      * @throws NamingException
      * @throws IOException
      */
@@ -333,8 +329,7 @@ public class TicketsServlet extends HttpServlet {
         String gamificationServiceResponse = requestGamificationService(jsonRPCrequest);
 
         // create a request response that contains the original request and
-        // forwards the response from the gamification
-        // service
+        // forwards the response from the gamification service
         return "{ \"event\": " + jsonRPCrequest + "&app=" + GAMIFICATION_SERVICE_APP + "\", \"response\":"
                 + gamificationServiceResponse + "}";
 
@@ -342,11 +337,11 @@ public class TicketsServlet extends HttpServlet {
 
     /**
      * creates a json string which can be used to send certain events for users
-     * 
+     *
      * @param playerId
      * @param eventName
      * @param relevance
-     * 
+     *
      * @return
      */
     private String getEventStringFor(String playerId, String eventName, String relevance) {
@@ -363,14 +358,12 @@ public class TicketsServlet extends HttpServlet {
 
     /**
      * Creates and fires an HTTP Post request for the provided JSON event string.
-     * 
-     * @param jsonString
-     *                   gamification service event formatted as JSON string
-     * @param response
-     *                   original doPost HttpServletResponse for exception handling
-     * 
+     *
+     * @param jsonString gamification service event formatted as JSON string
+     * @param response   original doPost HttpServletResponse for exception handling
+     *
      * @return String serialized gamification service response msg
-     * 
+     *
      * @throws NamingException
      * @throws IOException
      */
@@ -412,7 +405,7 @@ public class TicketsServlet extends HttpServlet {
             post.setEntity(new UrlEncodedFormEntity(urlParameters));
 
             // execute request, send POST to gamification service
-            logger.debug("Sending request to destination {} (App: {}) --> {}", GAMIFICATION_SERVICE_DESTINATION,
+            LOGGER.debug("Sending request to destination {} (App: {}) --> {}", GAMIFICATION_SERVICE_DESTINATION,
                     GAMIFICATION_SERVICE_APP, jsonString);
             HttpResponse gamificationServiceResponse = httpClient.execute(post, context);
 
@@ -434,7 +427,7 @@ public class TicketsServlet extends HttpServlet {
                 try {
                     errorMessage = JsonParser.parseString(response).getAsJsonObject().get("error").getAsString();
                 } catch (Exception e) {
-                    logger.debug("Error: ", e);
+                    LOGGER.debug("Error: ", e);
                     errorMessage = gamificationServiceResponse.getStatusLine().toString() + ": " + response;
                 }
                 throw new IllegalStateException(errorMessage);
@@ -442,20 +435,20 @@ public class TicketsServlet extends HttpServlet {
 
             return response;
         } finally {
-            // When HttpClient instance is no longer needed, shut down the connection manager to ensure immediate
-            // deallocation of system resources
+            // When HttpClient instance is no longer needed, shut down the connection
+            // manager to ensure immediate deallocation of system resources
             if (null != httpEntity) {
                 try {
                     EntityUtils.consume(httpEntity);
                 } catch (IOException e) {
-                    logger.debug("Failed to consume HttpEntity.", e);
+                    LOGGER.debug("Failed to consume HttpEntity.", e);
                 }
             }
             if (reader != null) {
                 try {
                     reader.close();
                 } catch (IOException e) {
-                    logger.debug("Failed to release resources after exception.", e);
+                    LOGGER.debug("Failed to release resources after exception.", e);
                 }
             }
         }

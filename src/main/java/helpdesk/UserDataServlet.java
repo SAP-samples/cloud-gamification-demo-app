@@ -21,7 +21,7 @@ import com.sap.security.um.user.UserProvider;
  */
 public class UserDataServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
-    private static final Logger logger = LoggerFactory.getLogger(UserDataServlet.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserDataServlet.class);
 
     /**
      * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse
@@ -49,7 +49,7 @@ public class UserDataServlet extends HttpServlet {
             out.print(gson.toJson(userdataObject));
             out.flush();
         } catch (Exception e) {
-            logger.debug("Error: ", e);
+            LOGGER.debug("Error: ", e);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "Error retrieving user data: " + e.getMessage());
         }

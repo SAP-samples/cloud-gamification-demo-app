@@ -51,13 +51,13 @@ sap.ui.controller("helpdesk.helpDesk", {
      * be moved into the notification widget at some point. however, in-app configuration can still be used to configure
      * the widget at runtime (see widget API) when widget is available, build up its config and initialize it
      */
-    initializeWidget: function (userdata, servicedata) {
+    initializeWidget: function (userData, serviceData) {
 
         if (GSNotifications !== undefined) {
             // configure notifications with users name and style class
             var config = {
-                appName: servicedata.appName,
-                userName: userdata.id,
+                appName: serviceData.appName,
+                userName: userData.id,
                 classList: ["sap-blue"]
             };
             GSNotifications.init(config);

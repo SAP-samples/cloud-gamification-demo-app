@@ -60,7 +60,7 @@ import com.sap.core.connectivity.api.configuration.DestinationConfiguration;
 public class ProxyServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
 
-    protected static final Logger logger = LoggerFactory.getLogger(ProxyServlet.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProxyServlet.class);
 
     private static final String GAMIFICATION_SERVICE_WIDGET_DESTINATION = "gswidgetdest";
     private static final String GAMIFICATION_SERVICE_APPNAME = System.getProperty("gamification.demoapp.appname",
@@ -110,10 +110,10 @@ public class ProxyServlet extends HttpServlet {
             String errorMessage = "Lookup of destination failed with reason: " + e.getMessage() + ". See "
                     + "logs for details. Hint: Make sure to have the destination "
                     + GAMIFICATION_SERVICE_WIDGET_DESTINATION + " configured.";
-            logger.debug(errorMessage, e);
+            LOGGER.debug(errorMessage, e);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, errorMessage);
         } catch (Exception e) {
-            logger.debug(e.getMessage());
+            LOGGER.debug(e.getMessage());
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
                     "Invalid service origin: " + e.getMessage());
         }
@@ -146,7 +146,7 @@ public class ProxyServlet extends HttpServlet {
                 response.getWriter().println(gamificationResponse);
             }
         } catch (Exception e) {
-            logger.debug(
+            LOGGER.debug(
                     "Forwarding data to Gamification Service failed. Hint: Make sure to have an HTTP proxy configured in your "
                             + "local Eclipse environment in case your environment uses an HTTP proxy for the outbound Internet communication.",
                     e);
@@ -157,16 +157,16 @@ public class ProxyServlet extends HttpServlet {
     /**
      * Creates and fires an HTTP Post request for the provided json API request
      * string. Connects via gswidgetdest destination.
-     * 
+     *
      * @param jsonString
      *                   gamification service event formatted as json string
      * @param app
      *                   optional: provide name of app
      * @param response
      *                   original doPost HttpServletResponse for exception handling
-     * 
+     *
      * @return String serialized gamification service response msg
-     * 
+     *
      * @throws ServletException
      * @throws IOException
      */
@@ -225,7 +225,7 @@ public class ProxyServlet extends HttpServlet {
                     break;
             }
             gamificationServiceResponse = httpClient.execute(post);
-            logger.debug("[Helpdesk TicketServlet] sending event to destination {} (App: {}) --> {}",
+            LOGGER.debug("[Helpdesk TicketServlet] sending event to destination {} (App: {}) --> {}",
                     GAMIFICATION_SERVICE_WIDGET_DESTINATION, app, jsonString);
 
             String response = serializeHTTPResponse(gamificationServiceResponse);
@@ -257,7 +257,7 @@ public class ProxyServlet extends HttpServlet {
                     }
 
                     gamificationServiceResponse = httpClient.execute(post, httpContext);
-                    logger.debug("[Helpdesk TicketServlet] sending event to destination {} (App: {}) --> {}",
+                    LOGGER.debug("[Helpdesk TicketServlet] sending event to destination {} (App: {}) --> {}",
                             GAMIFICATION_SERVICE_WIDGET_DESTINATION, app, jsonString);
 
                     statusCode = gamificationServiceResponse.getStatusLine().getStatusCode();
@@ -266,14 +266,14 @@ public class ProxyServlet extends HttpServlet {
                     if (statusCode != HTTP_OK) {
                         String errorMessage = "Expected response status code is 200 but it is " + statusCode
                                 + " . Server Response: " + response;
-                        logger.error(errorMessage);
+                        LOGGER.error(errorMessage);
                         throw new ServletException(errorMessage);
                     }
 
                 } else {
                     String errorMessage = "Expected response status code is 200 but it is " + statusCode
                             + " . Server Response: " + response;
-                    logger.error(errorMessage);
+                    LOGGER.error(errorMessage);
                     throw new ServletException(errorMessage);
                 }
             }
@@ -306,7 +306,7 @@ public class ProxyServlet extends HttpServlet {
             try {
                 EntityUtils.consume(httpEntity);
             } catch (IOException e) {
-                logger.error("Failed to release resources in finally block", e);
+                LOGGER.error("Failed to release resources in finally block", e);
             }
         }
         return sb.toString();

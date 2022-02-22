@@ -1,383 +1,387 @@
 html {
-	height: 100%;
-	-webkit-touch-callout: none;
-	-webkit-user-select: none;
-	-khtml-user-select: none;
-	-moz-user-select: none;
-	-ms-user-select: none;
-	user-select: none;
+    height: 100%;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
-img:focus, button:focus, nav:focus, span:focus {
-	outline: 0 !important;
+img:focus,
+button:focus,
+nav:focus,
+span:focus {
+    outline: 0 !important;
 }
 
 *:focus {
-	outline: 0 !important;
+    outline: 0 !important;
 }
 
 .sapUiBody {
-	height: 100%;
-	overflow-x: hidden;
-	overflow-y: hidden;
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: hidden;
 }
 
 #content {
-	top: 0px;
-	min-height: 100%; /* min height for modern browsers */
-	height: 100%; /* min height for IE */
+    top: 0px;
+    min-height: 100%; /* min height for modern browsers */
+    height: 100%; /* min height for IE */
 }
 
 #mainContainer {
-	width: 100%;
-	display: block;
+    width: 100%;
+    display: block;
 }
 
 body {
-	font: 15px/1.47 BentonSans, Arial, Helvetica, sans-serif !important;
-	background: url("../images/4.jpg") no-repeat center center fixed
-		!important;
-	-webkit-background-size: cover;
-	-moz-background-size: cover;
-	-o-background-size: cover;
-	background-size: cover;
+    font: 15px/1.47 BentonSans, Arial, Helvetica, sans-serif !important;
+    background: url("../images/4.jpg") no-repeat center center fixed !important;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
 }
 
 /** header styles **/
-div#mainContainer>div:first-child {
-	background: #000000;
+div#mainContainer > div:first-child {
+    background: #000000;
 }
 
-div#mainContainer>div {
-	width: 100%;
-	position: relative;
-	z-index: 199;
+div#mainContainer > div {
+    width: 100%;
+    position: relative;
+    z-index: 199;
 }
 
 div#HeaderView {
-	max-width: 1240px;
-	padding: 0 20px;
-	margin: 0 auto;
-	display: table;
+    max-width: 1240px;
+    padding: 0 20px;
+    margin: 0 auto;
+    display: table;
 }
 
 #logo {
-	padding-top: 2px;
+    padding-top: 2px;
 }
 
 div#header {
-	color: #000;
-	padding: 15px 0;
-	width: 100%;
-	color: white !important;
-	max-height: 32px;
+    color: #000;
+    padding: 15px 0;
+    width: 100%;
+    color: white !important;
+    max-height: 32px;
 }
 
-div#header>div:nth-child(1) {
-	font-size: 0;
-	line-height: 0;
-	float: left;
-	margin: 0 16.4% 0 0;
+div#header > div:nth-child(1) {
+    font-size: 0;
+    line-height: 0;
+    float: left;
+    margin: 0 16.4% 0 0;
 }
 
-div#header>div:nth-child(2) {
-	float: left;
-	font-family: BentonSansMedium, Arial, Helvetica, sans-serif;
-	font-size: 15px;
-	line-height: 20px;
+div#header > div:nth-child(2) {
+    float: left;
+    font-family: BentonSansMedium, Arial, Helvetica, sans-serif;
+    font-size: 15px;
+    line-height: 20px;
 }
 
-div#header>div:nth-child(3) {
-	float: right;
-	position: relative;
-	margin-top: 10px;
+div#header > div:nth-child(3) {
+    float: right;
+    position: relative;
+    margin-top: 10px;
 }
 
 .nav-item {
-	float: left;
-	margin: 0 34px 0 0;
-	position: relative;
-	padding: 10px 0;
-	color: #fff !important;
-	font-family: BentonSansMedium, Arial, Helvetica, sans-serif !important;
-	font-size: 15px !important;
-	line-height: 20px !important;
+    float: left;
+    margin: 0 34px 0 0;
+    position: relative;
+    padding: 10px 0;
+    color: #fff !important;
+    font-family: BentonSansMedium, Arial, Helvetica, sans-serif !important;
+    font-size: 15px !important;
+    line-height: 20px !important;
 }
 
 #user-header a {
-	padding-right: 20px;
-	font-size: 16px;
-	color: #fff;
+    padding-right: 20px;
+    font-size: 16px;
+    color: #fff;
 }
 
 /** login page styles **/
 div#loginView {
-	width: 400px;
-	height: 120px;
-	padding: 31px 10px 31px 33px;
-	background: rgba(255, 255, 255, 0.93);
-	margin-top: 14%;
-	margin-left: 50%;
+    width: 400px;
+    height: 120px;
+    padding: 31px 10px 31px 33px;
+    background: rgba(255, 255, 255, 0.93);
+    margin-top: 14%;
+    margin-left: 50%;
 }
 
 #currentUser {
-	font-size: 45px;
-	line-height: 50px;
-	white-space: normal;
+    font-size: 45px;
+    line-height: 50px;
+    white-space: normal;
 }
 
 #loginPanel a {
-	margin-top: 5px;
+    margin-top: 5px;
 }
 
 div#loginPanel {
-	width: 300px;
+    width: 300px;
 }
 
 /** open tickets page styles **/
 div#openTicketsView {
-	max-width: 1240px;
-	padding: 0 20px;
-	margin: 0 auto;
-	display: table;
+    max-width: 1240px;
+    padding: 0 20px;
+    margin: 0 auto;
+    display: table;
 }
 
 #ticketsWorkbench {
-	padding-top: 60px;
-	width: 100%;
+    padding-top: 60px;
+    width: 100%;
 }
 
-#ticketsWorkbench>div:first-child {
-	width: 400px;
+#ticketsWorkbench > div:first-child {
+    width: 400px;
 }
 
-#ticketsWorkbench>div:nth-child(2) {
-	width: 100%;
-	margin-left: 25px;
-	max-width: 820px;
+#ticketsWorkbench > div:nth-child(2) {
+    width: 100%;
+    margin-left: 25px;
+    max-width: 820px;
 }
 
 div#openTicketsLayout .sapUiVltCell.sapuiVltCell {
-	margin-bottom: 5px;
+    margin-bottom: 5px;
 }
 
 div#openTicketsLayout .sapUiVlt {
-	display: block;
+    display: block;
 }
 
 div.ticketPanel {
-	cursor: pointer;
-	background-color: rgba(255, 255, 255, 0.9);
-	padding: 10px 15px;
-	height: 70px;
-	-webkit-transition: background-color 0.15s ease-in-out;
-	-moz-transition: background-color 0.15s ease-in-out;
-	-o-transition: background-color 0.15s ease-in-out;
-	transition: background-color 0.15s ease-in-out;
-	-webkit-transition: opacity 0.5s ease-in-out;
-	-moz-transition: opacity 0.5s ease-in-out;
-	-o-transition: opacity 0.5s ease-in-out;
-	transition: opacity 0.5s ease-in-out;
+    cursor: pointer;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 10px 15px;
+    height: 70px;
+    -webkit-transition: background-color 0.15s ease-in-out;
+    -moz-transition: background-color 0.15s ease-in-out;
+    -o-transition: background-color 0.15s ease-in-out;
+    transition: background-color 0.15s ease-in-out;
+    -webkit-transition: opacity 0.5s ease-in-out;
+    -moz-transition: opacity 0.5s ease-in-out;
+    -o-transition: opacity 0.5s ease-in-out;
+    transition: opacity 0.5s ease-in-out;
 }
 
 div.fadeTicket {
-	opacity: 0;
+    opacity: 0;
 }
 
 div.ticketPanel * {
-	cursor: pointer;
+    cursor: pointer;
 }
 
 div.ticketPanel:hover {
-	background-color: #008fd3 !important;
+    background-color: #008fd3 !important;
 }
 
 div.ticketPanel:hover * {
-	color: white;
+    color: white;
 }
 
 label.ticket-issue {
-	padding: 5px;
-	white-space: nowrap;
-	text-overflow: ellipsis;
-	line-height: 36px;
-	font-size: 16px;
-	width: 91%;
+    padding: 5px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    line-height: 36px;
+    font-size: 16px;
+    width: 91%;
 }
 
 .ticket-active {
-	/*  background-color: rgb(255, 251, 206) !important; */
-	background-color: rgb(254, 245, 231) !important;
+    /*  background-color: rgb(255, 251, 206) !important; */
+    background-color: rgb(254, 245, 231) !important;
 }
 
 .criticalTicket {
-	border-left: 10px solid rgb(254, 81, 81);
-	width: 92.5% !important;
+    border-left: 10px solid rgb(254, 81, 81);
+    width: 92.5% !important;
 }
 
 div.ticketDetails * {
-	color: grey;
+    color: grey;
 }
 
 div.ticketDetails {
-	width: 95%;
-	position: relative;
+    width: 95%;
+    position: relative;
 }
 
-div.ticketDetails>div {
-	position: absolute;
-	top: -9px;
+div.ticketDetails > div {
+    position: absolute;
+    top: -9px;
 }
 
-div.ticketDetails>div:first-child {
-	left: 0px;
+div.ticketDetails > div:first-child {
+    left: 0px;
 }
 
-div.ticketDetails>div:nth-child(2) {
-	left: 50px;
+div.ticketDetails > div:nth-child(2) {
+    left: 50px;
 }
 
-div.ticketDetails>div:last-child {
-	right: 10px;
+div.ticketDetails > div:last-child {
+    right: 10px;
 }
 
 div#ticketResponse {
-	width: 98% !important;
+    width: 98% !important;
 }
 
 button#responseBtn {
-	background: #008fd3;
-	color: white;
-	padding: 5px;
-	margin: 5px;
-	width: 150px;
-	height: 40px;
-	font-size: 15px;
-	font: 16px/1.47 BentonSans, Arial, Helvetica, sans-serif;
-	border-radius: 6px;
-	cursor: pointer;
-	border: 0;
-	float: right;
+    background: #008fd3;
+    color: white;
+    padding: 5px;
+    margin: 5px;
+    width: 150px;
+    height: 40px;
+    font-size: 15px;
+    font: 16px/1.47 BentonSans, Arial, Helvetica, sans-serif;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 0;
+    float: right;
 }
 
 button#responseBtn:hover {
-	background-color: #003283;
+    background-color: #003283;
 }
 
 hr#divider {
-	background-color: rgb(224, 208, 182);
-	height: 1px;
-	border: 0;
-	margin-bottom: 0;
+    background-color: rgb(224, 208, 182);
+    height: 1px;
+    border: 0;
+    margin-bottom: 0;
 }
 
-label#currentTicketIssue, #notifyInnerDiv, div#currentTicketDetails,
-	#responseHeader {
-	padding: 15px;
-	font: 16px/1.47 BentonSans, Arial, Helvetica, sans-serif !important;
+label#currentTicketIssue,
+#notifyInnerDiv,
+div#currentTicketDetails,
+#responseHeader {
+    padding: 15px;
+    font: 16px/1.47 BentonSans, Arial, Helvetica, sans-serif !important;
 }
 
 textarea#responseInput {
-	margin: 15px;
-	width: 96% !important;
-	border: 1px solid rgb(242, 232, 215);
-	background-color: rgb(255, 237, 206);
-	background-color: rgb(254, 245, 231) !important;
-	border-radius: 6px;
-	font: 16px/1.47 BentonSans, Arial, Helvetica, sans-serif !important;
-	padding: 15px;
+    margin: 15px;
+    width: 96% !important;
+    border: 1px solid rgb(242, 232, 215);
+    background-color: rgb(255, 237, 206);
+    background-color: rgb(254, 245, 231) !important;
+    border-radius: 6px;
+    font: 16px/1.47 BentonSans, Arial, Helvetica, sans-serif !important;
+    padding: 15px;
 }
 
 label#currentTicketIssue {
-	font-size: 15px;
+    font-size: 15px;
 }
 
 div#notifyInnerDiv {
-	background-color: rgb(208, 255, 206);
+    background-color: rgb(208, 255, 206);
 }
 
 .padding-bottom {
-	padding-bottom: 15px;
+    padding-bottom: 15px;
 }
 
 div#currentTicket {
-	background-color: rgba(255, 255, 255, 0.9);
-	max-width: 100%;
+    background-color: rgba(255, 255, 255, 0.9);
+    max-width: 100%;
 }
 
 div#currentTicketDetails {
-	width: 100%;
+    width: 100%;
 }
 
 div#currentTicketDetails * {
-	color: grey;
+    color: grey;
 }
 
 label#current-ticket-date {
-	width: 18%;
-	float: right;
-	padding-right: 35px;
+    width: 18%;
+    float: right;
+    padding-right: 35px;
 }
 
 label#current-ticket-id {
-	width: 15%;
+    width: 15%;
 }
 
 div#currentTicketHeader {
-	width: 100%;
+    width: 100%;
 }
 
-div#currentTicketHeader>div:last-child {
-	float: right;
+div#currentTicketHeader > div:last-child {
+    float: right;
 }
 
 label#currentTicketId {
-	padding: 15px;
+    padding: 15px;
 }
 
 label#currentTicketRelevance {
-	padding: 15px;
-	font: 16px/1.47 BentonSans, Arial, Helvetica, sans-serif !important;
-	color: rgb(254, 81, 81) !important;
+    padding: 15px;
+    font: 16px/1.47 BentonSans, Arial, Helvetica, sans-serif !important;
+    color: rgb(254, 81, 81) !important;
 }
 
 .hidden {
-	visibility: hidden;
-	opacity: 0;
-	transition: visibility 0s 0.2s, opacity 0.2s linear;
-	-webkit-transition: visibility 0s 0.2s, opacity 0.2s linear;
-	height: 0;
-	padding: 0 !important;
+    visibility: hidden;
+    opacity: 0;
+    transition: visibility 0s 0.2s, opacity 0.2s linear;
+    -webkit-transition: visibility 0s 0.2s, opacity 0.2s linear;
+    height: 0;
+    padding: 0 !important;
 }
 
 /** notifications page styles **/
 div#notificationsVL {
-	padding-top: 60px;
-	display: table;
-	margin: 0 auto;
+    padding-top: 60px;
+    display: table;
+    margin: 0 auto;
 }
 
 .notification-message {
-	font: 16px/1.47 BentonSans, Arial, Helvetica, sans-serif !important;
+    font: 16px/1.47 BentonSans, Arial, Helvetica, sans-serif !important;
 }
 
 .notification-panel {
-	background-color: rgba(255, 255, 255, 0.8);
-	margin: 2px;
-	padding: 5px;
-	min-width: 220px;
+    background-color: rgba(255, 255, 255, 0.8);
+    margin: 2px;
+    padding: 5px;
+    min-width: 220px;
 }
 
 .notification-panel label {
-	padding: 3px 10px;
+    padding: 3px 10px;
 }
 
 .notification-date {
-	font: 12px/1.9 BentonSans, Arial, Helvetica, sans-serif !important;
-	color: grey !important;
+    font: 12px/1.9 BentonSans, Arial, Helvetica, sans-serif !important;
+    color: grey !important;
 }
 
 /** profile page styles **/
 .sap-blue {
-	background: #008fd3 !important;
+    background: #008fd3 !important;
 }

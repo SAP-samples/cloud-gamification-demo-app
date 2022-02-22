@@ -1,10 +1,10 @@
 sap.ui.jsview("helpdesk.header", {
 
-    getControllerName: function() {
+    getControllerName: function () {
         return "helpdesk.header";
     },
 
-    createContent: function() {
+    createContent: function () {
 
         var appController = sap.ui.getCore().byId("mainView").getController();
 
@@ -25,13 +25,13 @@ sap.ui.jsview("helpdesk.header", {
         // add menu panel (top center)
         menuContainer.addContent(new sap.ui.commons.Link({
             text: "Open Tickets",
-            press: function() {
+            press: function () {
                 appController.show("openTickets");
             }
         }).addStyleClass("nav-item"));
         menuContainer.addContent(new sap.ui.commons.Link({
             text: "Notifications",
-            press: function() {
+            press: function () {
                 appController.show("notifications");
             }
         }).addStyleClass("nav-item"));
@@ -39,13 +39,13 @@ sap.ui.jsview("helpdesk.header", {
         // add user panel (top right)
         userContainer.addContent(new sap.ui.commons.Link("profileLink", {
             text: "{userdata>/firstname}",
-            press: function() {
+            press: function () {
                 appController.show("profile");
             }
         }));
         userContainer.addContent(new sap.ui.commons.Link({
             text: "Log Out",
-            press: function() {
+            press: function () {
                 sap.ui.getCore().byId("LoginView").getController().logoff();
             }
         }));
