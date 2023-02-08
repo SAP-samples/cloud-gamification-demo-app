@@ -5,6 +5,13 @@
  * GSNotifications.
  */
 var GSNotifications = (function () {
+
+    jQuery(document).ajaxComplete(function (e, jqXHR) {
+        if (jqXHR.getResponseHeader("com.sap.cloud.security.login")) {
+            window.location.reload(true);
+        }
+    });
+
     // debug mode
     var _debug = false;
 
